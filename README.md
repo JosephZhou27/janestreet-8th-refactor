@@ -9,7 +9,7 @@ A detailed description can be found in [`solution.md`](solution.md) and in [Kagg
 
 ## Requirements
 
-- ~100GB RAM
+- ~100GB RAM for full training on all dates
 - 12GB GPU RAM
 
 ## Usage
