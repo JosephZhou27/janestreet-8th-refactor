@@ -1,5 +1,8 @@
 # Kaggle Jane Street Real-Time Market Data Forecasting
 
+> **About this fork.** This is a fork of [evgeniavolkova/kagglejanestreet](https://github.com/evgeniavolkova/kagglejanestreet), the 8th-place (private LB) solution to the Jane Street Real-Time Market Data Forecasting competition by Evgeniia Volkova. All modelling ideas and the original code are hers.
+> In this fork I refactor the project for reproducibility and maintainability: a uv-managed environment, tests, CI, logging, and a small-sample mode that runs on a laptop. Every change goes through a pull request.
+
 Solution for the [Jane Street 2024 Kaggle competition](https://www.kaggle.com/competitions/jane-street-real-time-market-data-forecasting/overview).
 
 A detailed description can be found in [`solution.md`](solution.md) and in [Kaggle discussion](https://www.kaggle.com/competitions/jane-street-real-time-market-data-forecasting/discussion/556542).
