@@ -9,7 +9,7 @@ A detailed description can be found in [`solution.md`](solution.md) and in [Kagg
 
 ## Requirements
 
-- ~100GB RAM a small-sample mode for laptops is planned; for full training on all dates
+- ~100GB RAM for full training on all dates (a small-sample mode for laptops is planned)
 - 12GB GPU RAM
 
 ## Usage
