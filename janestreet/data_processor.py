@@ -1,6 +1,7 @@
 """Custom data processor for feature engineering and transformation."""
 
 import os
+from typing import ClassVar
 
 import joblib
 import polars as pl
@@ -31,9 +32,9 @@ class DataProcessor:
 
     PATH = os.path.join(PATH_MODELS, "data_processors")
 
-    COLS_FEATURES_INIT = [f"feature_{i:02d}" for i in range(79)]
+    COLS_FEATURES_INIT: ClassVar[list[str]] = [f"feature_{i:02d}" for i in range(79)]
 
-    COLS_FEATURES_CORR = [
+    COLS_FEATURES_CORR: ClassVar[list[str]] = [
         "feature_06",
         "feature_04",
         "feature_07",
@@ -51,7 +52,7 @@ class DataProcessor:
         "feature_71",
         "feature_72",
     ]
-    COLS_FEATURES_CAT = ["feature_09", "feature_10", "feature_11"]
+    COLS_FEATURES_CAT: ClassVar[list[str]] = ["feature_09", "feature_10", "feature_11"]
 
     T = 1000
 

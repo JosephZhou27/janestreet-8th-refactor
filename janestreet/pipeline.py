@@ -489,9 +489,8 @@ class PipelineCV:
             self.models.append(model_fold)
 
             preds = []
-            cnt_dates = 0
             model_save = copy.deepcopy(model_fold)
-            for date_id in tqdm(dates_valid):
+            for cnt_dates, date_id in enumerate(tqdm(dates_valid)):
                 df_valid_date = df_valid.filter(pl.col(COL_DATE) == date_id)
 
                 if model_fold.refit & (cnt_dates > 0):
@@ -501,7 +500,6 @@ class PipelineCV:
 
                 preds_i, _ = model_save.predict(df_valid_date)
                 preds += list(preds_i)
-                cnt_dates += 1
             preds = np.array(preds)
 
             df_valid = df_valid.fill_null(0.0)

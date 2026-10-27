@@ -48,10 +48,9 @@ for NUM in [2, 3]:
 
         pipeline.fit(verbose=True)
 
-        cnt_dates = 0
         preds_m = []
         dates = np.unique(df_valid.select(pl.col(COL_DATE)).to_series().to_numpy())
-        for date_id in tqdm(dates):
+        for cnt_dates, date_id in enumerate(tqdm(dates)):
             df_valid_date = df.filter(pl.col(COL_DATE) == date_id)
             if pipeline.refit & (cnt_dates > 0):
                 df_valid_time = df.filter(pl.col(COL_DATE) == date_id - 1)
@@ -59,7 +58,6 @@ for NUM in [2, 3]:
             if date_id >= 1499:
                 preds_i, hidden = pipeline.predict(df_valid_date, n_times=None)
                 preds_m += list(preds_i)
-            cnt_dates += 1
 
         preds_m = np.array(preds_m)
         preds.append(preds_m)

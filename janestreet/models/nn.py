@@ -509,15 +509,11 @@ class NN:
             else:
                 no_improvement += 1
 
-            if self.early_stopping:
-                if no_improvement >= self.early_stopping_patience + 1:
-                    self.best_epoch = best_epoch + 1
-                    if verbose:
-                        print(
-                            f"Early stopping on epoch {best_epoch + 1}. "
-                            f"Best score: {min_val_r2:.4f}"
-                        )
-                    break
+            if self.early_stopping and no_improvement >= self.early_stopping_patience + 1:
+                self.best_epoch = best_epoch + 1
+                if verbose:
+                    print(f"Early stopping on epoch {best_epoch + 1}. Best score: {min_val_r2:.4f}")
+                break
 
         # Load the best model
         if self.early_stopping:

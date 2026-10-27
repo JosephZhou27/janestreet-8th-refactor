@@ -84,17 +84,15 @@ for SEED in range(3):
     )
     pipeline.fit(df_train, df_valid, verbose=True)
 
-    cnt_dates = 0
     preds = []
     dates = np.unique(df_valid.select(pl.col(COL_DATE)).to_series().to_numpy())
-    for date_id in tqdm(dates):
+    for cnt_dates, date_id in enumerate(tqdm(dates)):
         df_valid_date = df.filter(pl.col(COL_DATE) == date_id)
         if pipeline.refit & (cnt_dates > 0):
             df_valid_upd = df.filter(pl.col(COL_DATE) == date_id - 1)
             pipeline.update(df_valid_upd)
         preds_i, hidden = pipeline.predict(df_valid_date, n_times=None)
         preds += list(preds_i)
-        cnt_dates += 1
 
     preds = np.array(preds)
     y = df_valid.select(pl.col(COL_TARGET)).to_series().to_numpy()

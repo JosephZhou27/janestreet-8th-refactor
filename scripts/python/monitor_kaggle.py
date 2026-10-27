@@ -99,7 +99,9 @@ def local_time_to_timestamp(local_time_str):
 
 def check_submissions():
     """
-    Checks the status of Kaggle submissions and sends Slack notifications for new or updated submissions.
+    Checks the status of Kaggle submissions.
+
+    Sends Slack notifications for new or updated submissions.
 
     Returns:
         None
@@ -129,7 +131,8 @@ def check_submissions():
         timestamp = local_time_to_timestamp(date_time)
 
         print(
-            f"{current_time}: {fileName}, {date_time}, {description}, {status}, {publicScore}, {timestamp}"
+            f"{current_time}: {fileName}, {date_time}, {description}, "
+            f"{status}, {publicScore}, {timestamp}"
         )
 
         if timestamp not in submission_statuses:
@@ -145,7 +148,8 @@ def check_submissions():
                     f"> *Score:* `{publicScore}`"
                 )
                 print(
-                    f"{current_time}: New submission detected: {description} at {date_time}. Status: {status}."
+                    f"{current_time}: New submission detected: "
+                    f"{description} at {date_time}. Status: {status}."
                 )
                 send_slack_notification(notification_message)
         else:
@@ -167,7 +171,8 @@ def check_submissions():
                 print(
                     f"{current_time}: Submission at {date_time} "
                     f"(timestamp: {timestamp}) with description {description} "
-                    f"has changed status to {status}. Time taken: {execution_hours}h {execution_minutes}m."
+                    f"has changed status to {status}. Time taken: "
+                    f"{execution_hours}h {execution_minutes}m."
                 )
                 send_slack_notification(notification_message)
 
