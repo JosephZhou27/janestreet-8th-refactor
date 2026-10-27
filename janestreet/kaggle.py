@@ -74,12 +74,11 @@ def upload_code(dataset_id: str, source_path: str) -> None:
         source_path (str): The local path where the Python package is stored.
 
     Notes:
-        This function builds a Python package in the current working directory
-        using the `setup.py` file, and then uploads it to the specified Kaggle
-        dataset.
+        This function builds a Python package in the project directory
+        with `uv build`, and then uploads it to the specified Kaggle
     """
     os.chdir(base_path)
-    run_shell_command("python setup.py sdist bdist_wheel")
+    run_shell_command("uv build")
 
     original_source_path = Path(source_path)
     temp_dir = tempfile.mkdtemp()
