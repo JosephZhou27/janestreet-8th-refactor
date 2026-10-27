@@ -13,7 +13,7 @@ import shutil
 import subprocess
 
 
-def run_shell_command(command: str, cwd: str = None) -> None:
+def run_shell_command(command: str, cwd: str | None = None) -> None:
     """Executes a shell command and prints the output/errors in real-time.
 
     Args:
@@ -59,7 +59,6 @@ def create_folder(path: str, rm: bool = False) -> None:
         path (str): Path to the folder.
         rm (bool, optional): Whether to remove the folder if it already exists. Defaults to False.
     """
-    if rm:
-        if os.path.exists(path):
-            shutil.rmtree(path)
+    if rm and os.path.exists(path):
+        shutil.rmtree(path)
     os.makedirs(path, exist_ok=True)

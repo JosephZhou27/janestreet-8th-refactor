@@ -20,7 +20,7 @@ def flatten_collate_fn(batch: list) -> tuple[torch.Tensor]:
 
         tuple[torch.Tensor]: Flattened tensors (X, resp, y, weights).
     """
-    X, resp, y, weights = zip(*batch)
+    X, resp, y, weights = zip(*batch, strict=False)
     X = torch.cat(X, dim=0)
     resp = torch.cat(resp, dim=0)
     y = torch.cat(y, dim=0)
@@ -213,10 +213,7 @@ class ModelRBase(nn.Module):
             self.gru_layers.append(layer)
             self.dropout_rates.append(nn.Dropout(dropout_rates[i]))
 
-        if self.num_layers == 0:
-            n_input_linear = input_size
-        else:
-            n_input_linear = hidden_sizes[-1]
+        n_input_linear = input_size if self.num_layers == 0 else hidden_sizes[-1]
 
         fc_layers = []
         if hidden_sizes_linear:
@@ -231,7 +228,9 @@ class ModelRBase(nn.Module):
 
         self.fc = nn.Sequential(*fc_layers)
 
-    def forward(self, x: torch.Tensor, hidden: bool = None) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, hidden: bool | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass of the model.
 
@@ -540,10 +539,7 @@ class NN:
         total_loss = 0.0
 
         y_total, weights_total, preds_total = [], [], []
-        if verbose:
-            itr = tqdm(train_dataloader)
-        else:
-            itr = train_dataloader
+        itr = tqdm(train_dataloader) if verbose else train_dataloader
 
         for x_batch, resp_batch, y_batch, weights_batch in itr:
             x_batch, resp_batch, y_batch, weights_batch = (
@@ -602,10 +598,7 @@ class NN:
 
         losses, all_y, all_weights, all_preds = [], [], [], []
 
-        if verbose:
-            itr = tqdm(val_dataloader)
-        else:
-            itr = val_dataloader
+        itr = tqdm(val_dataloader) if verbose else val_dataloader
         for x_batch, resp_batch, y_batch, weights_batch in itr:
             x_batch, resp_batch, y_batch, weights_batch = (
                 item.to(self.device) for item in [x_batch, resp_batch, y_batch, weights_batch]
@@ -684,7 +677,7 @@ class NN:
         optimizer.step()
 
     def predict(
-        self, X: np.array, n_times: int = None, hidden: torch.Tensor | list | None = None
+        self, X: np.array, n_times: int | None = None, hidden: torch.Tensor | list | None = None
     ) -> tuple[np.array, torch.Tensor | list]:
         """Predict the target variable for the given input data.
 

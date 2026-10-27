@@ -36,7 +36,7 @@ print(WEIGHTS)
 print(REFIT_MODELS)
 
 models = []
-for i, model_name in enumerate(MODEL_NAMES):
+for _i, model_name in enumerate(MODEL_NAMES):
     pipeline = FullPipeline(
         NN(),
         name=model_name,

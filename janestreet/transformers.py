@@ -21,7 +21,7 @@ class PolarsTransformer:
 
     def __init__(
         self,
-        features: list = None,
+        features: list | None = None,
         fillnull: bool = True,
         scale: bool = True,
         clip_time: bool = True,
@@ -105,25 +105,24 @@ class PolarsTransformer:
         Returns:
             pl.DataFrame: The transformed Polars DataFrame.
         """
-        if refit:
-            if self.clip_time:
-                self.statistics_min_max.update(
-                    {
-                        column: {
-                            "min": (
-                                self.statistics_min_max[column]["min"]
-                                if df[column].min() is None
-                                else min(df[column].min(), self.statistics_min_max[column]["min"])
-                            ),
-                            "max": (
-                                self.statistics_min_max[column]["max"]
-                                if df[column].max() is None
-                                else max(df[column].max(), self.statistics_min_max[column]["max"])
-                            ),
-                        }
-                        for column in ["feature_time_id"]
+        if refit and self.clip_time:
+            self.statistics_min_max.update(
+                {
+                    column: {
+                        "min": (
+                            self.statistics_min_max[column]["min"]
+                            if df[column].min() is None
+                            else min(df[column].min(), self.statistics_min_max[column]["min"])
+                        ),
+                        "max": (
+                            self.statistics_min_max[column]["max"]
+                            if df[column].max() is None
+                            else max(df[column].max(), self.statistics_min_max[column]["max"])
+                        ),
                     }
-                )
+                    for column in ["feature_time_id"]
+                }
+            )
 
         if self.clip_time:
             df = df.with_columns(

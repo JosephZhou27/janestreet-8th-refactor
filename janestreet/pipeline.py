@@ -285,7 +285,7 @@ class PipelineEnsemble:
         self,
         models: list,
         weights: np.array = None,
-        refit_models: list[bool] = None,
+        refit_models: list[bool] | None = None,
         col_target: str = COL_TARGET,
     ) -> None:
         """Initializes the PipelineEnsemble.

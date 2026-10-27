@@ -56,7 +56,7 @@ class DataProcessor:
     T = 1000
 
     def __init__(
-        self, name: str, skip_days: int = None, transformer: PolarsTransformer | None = None
+        self, name: str, skip_days: int | None = None, transformer: PolarsTransformer | None = None
     ):
         """Initializes the DataProcessor.
 
@@ -117,7 +117,7 @@ class DataProcessor:
         fast: bool = False,
         date_id: int = 0,
         time_id: int = 0,
-        symbols: list = None,
+        symbols: list | None = None,
     ) -> pl.DataFrame:
         """Processes test data.
 
@@ -166,7 +166,7 @@ class DataProcessor:
         fast: bool = False,
         date_id: int | None = None,
         time_id: int | None = None,
-        symbols: list = None,
+        symbols: list | None = None,
     ) -> pl.DataFrame:
         """Adds features to the data.
 
@@ -204,7 +204,7 @@ class DataProcessor:
         fast: bool = False,
         date_id: int | None = None,
         time_id: int | None = None,
-        symbols: list = None,
+        symbols: list | None = None,
     ) -> pl.DataFrame:
         """Computes rolling averages and standard deviations.
 
@@ -246,7 +246,7 @@ class DataProcessor:
                     + [pl.col(col).std().alias(f"{col}_rolling_std_{n}") for col in cols]
                     + [
                         pl.col(col).last().alias(col)
-                        for col in self.COLS_FEATURES_INIT + ["row_id", "weight", "is_scored"]
+                        for col in [*self.COLS_FEATURES_INIT, "row_id", "weight", "is_scored"]
                     ]
                 )
                 .filter(pl.col("symbol_id").is_in(symbols))

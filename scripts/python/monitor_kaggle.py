@@ -121,7 +121,7 @@ def check_submissions():
     next(reader)
 
     for row in reader:
-        fileName, date, description, status, publicScore, privateScore = row
+        fileName, date, description, status, publicScore, _privateScore = row
         if date == "date":
             continue
 
