@@ -16,14 +16,13 @@ A detailed description can be found in [`solution.md`](solution.md) and in [Kagg
 
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/), then create the environment (Python 3.12, locked dependencies):
 
-   ```
-   bash
+   ```bash
    uv sync
    ```
 
    Run scripts with `uv run`, e.g. `uv run python scripts/python/run_cv.py`.
 2. Download the dataset from [Kaggle](https://www.kaggle.com/competitions/jane-street-real-time-market-data-forecasting/data).
-3. Set paths and other config variables in [`janestreet/config.py`](janestreet/config.py).
+3. Copy [`.env.example`](.env.example) to `.env` and set `JANESTREET_DATA_DIR` to the folder that contains `train.parquet`. Settings can also be passed as environment variables; see [`janestreet/config.py`](janestreet/config.py) for all options.
 
 ### Scripts
 

@@ -11,7 +11,6 @@ Classes:
 
 import copy
 import gc
-import os
 
 import joblib
 import numpy as np
@@ -22,7 +21,15 @@ from sklearn.model_selection import TimeSeriesSplit
 from tqdm.auto import tqdm
 
 from . import utils
-from .config import COL_DATE, COL_ID, COL_TARGET, COL_TIME, COL_WEIGHT, COLS_RESPONDERS, PATH_MODELS
+from .config import (
+    COL_DATE,
+    COL_ID,
+    COL_TARGET,
+    COL_TIME,
+    COL_WEIGHT,
+    COLS_RESPONDERS,
+    get_settings,
+)
 from .metrics import r2_weighted
 from .tracker import WandbTracker
 
@@ -87,7 +94,6 @@ class FullPipeline:
         self.responders = [i for i in COLS_RESPONDERS if i != self.col_target]
 
         self.set_run_name(run_name)
-        self.path = os.path.join(PATH_MODELS, f"{self.run_name}")
 
     def set_run_name(self, run_name: str) -> None:
         """Sets the run name for the model.
@@ -97,7 +103,7 @@ class FullPipeline:
 
         """
         self.run_name = run_name
-        self.path = os.path.join(PATH_MODELS, f"{self.run_name}")
+        self.path = get_settings().models_dir / self.run_name
         if self.save_to_disc:
             utils.create_folder(self.path)
 

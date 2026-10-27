@@ -3,7 +3,7 @@
 import pandas as pd
 import wandb
 
-from .config import WANDB_PROJECT, base_path
+from .config import WANDB_PROJECT, get_settings
 
 
 class WandbTracker:
@@ -50,7 +50,11 @@ class WandbTracker:
             }
         )
         wandb.init(
-            project=WANDB_PROJECT, name=self.run_name, config=config, dir=base_path, save_code=True
+            project=WANDB_PROJECT,
+            name=self.run_name,
+            config=config,
+            dir=get_settings().project_dir,
+            save_code=True,
         )
         self.save_features(features)
         print(f"Running {self.run_name} model.")
