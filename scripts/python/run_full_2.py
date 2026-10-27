@@ -4,14 +4,13 @@ import numpy as np
 import polars as pl
 from tqdm.auto import tqdm
 
-from janestreet.setup_env import setup_environment
-from janestreet.pipeline import FullPipeline
-from janestreet.models.nn import NN
-from janestreet.config import COL_DATE, COL_WEIGHT, COL_TARGET
+from janestreet.config import COL_DATE, COL_TARGET, COL_WEIGHT
 from janestreet.data_processor import DataProcessor
 from janestreet.metrics import r2_weighted
+from janestreet.models.nn import NN
+from janestreet.pipeline import FullPipeline
+from janestreet.setup_env import setup_environment
 from janestreet.transformers import PolarsTransformer
-
 
 MODEL_TYPE = "gru"
 START = 500

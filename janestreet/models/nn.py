@@ -1,14 +1,14 @@
 """Neural net."""
 
 import copy
-import numpy as np
-from tqdm.auto import tqdm
 
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
+from tqdm.auto import tqdm
 
-from janestreet.metrics import r2_weighted_torch, WeightedR2Loss
+from janestreet.metrics import WeightedR2Loss, r2_weighted_torch
 
 
 def flatten_collate_fn(batch: list) -> tuple[torch.Tensor]:
@@ -197,7 +197,7 @@ class ModelRBase(nn.Module):
         Raises:
             ValueError: If `model_type` is not "gru" or "lstm".
         """
-        super(ModelRBase, self).__init__()
+        super().__init__()
         self.num_layers = len(hidden_sizes)
 
         self.gru_layers = nn.ModuleList()
@@ -302,7 +302,7 @@ class ModelR(nn.Module):
             dropout_rates_linear (list): List of dropout rates for the linear layers.
             model_type (str): Type of the model, either "gru" or "lstm".
         """
-        super(ModelR, self).__init__()
+        super().__init__()
         self.num_resp = 4
 
         self.grus = nn.ModuleList()

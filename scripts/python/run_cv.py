@@ -1,9 +1,9 @@
 """Run model on CV."""
 
-from janestreet.setup_env import setup_environment
-from janestreet.pipeline import FullPipeline, PipelineCV
-from janestreet.models.nn import NN
 from janestreet.data_processor import DataProcessor
+from janestreet.models.nn import NN
+from janestreet.pipeline import FullPipeline, PipelineCV
+from janestreet.setup_env import setup_environment
 from janestreet.tracker import WandbTracker
 from janestreet.transformers import PolarsTransformer
 

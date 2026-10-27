@@ -32,14 +32,15 @@ Example `.env` file:
     KAGGLE_COMPETITION_ID=your-competition-id
 """
 
-import os
-import time
-import requests
 import csv
+import os
 import subprocess
+import time
 from datetime import datetime
-from dotenv import load_dotenv
+
 import pytz
+import requests
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -112,7 +113,7 @@ def check_submissions():
     result = subprocess.run(
         ["kaggle", "competitions", "submissions", "-c", kaggle_competition_id, "--csv"],
         stdout=subprocess.PIPE,
-        universal_newlines=True,
+        text=True,
     )
     submissions = result.stdout
 

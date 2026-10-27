@@ -13,24 +13,18 @@ import copy
 import gc
 import os
 
-
 import joblib
 import numpy as np
 import polars as pl
-
+import torch
+from sklearn.base import BaseEstimator, clone
+from sklearn.model_selection import TimeSeriesSplit
 from tqdm.auto import tqdm
 
-from sklearn.base import clone
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.base import BaseEstimator
-
-import torch
-
-from .config import PATH_MODELS, COL_TARGET, COL_ID, COL_DATE, COL_TIME, COL_WEIGHT, COLS_RESPONDERS
 from . import utils
+from .config import COL_DATE, COL_ID, COL_TARGET, COL_TIME, COL_WEIGHT, COLS_RESPONDERS, PATH_MODELS
 from .metrics import r2_weighted
 from .tracker import WandbTracker
-
 
 TEST_SIZE = 200
 GAP = 0

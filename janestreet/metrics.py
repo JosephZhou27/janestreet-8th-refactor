@@ -52,7 +52,7 @@ class WeightedR2Loss(nn.Module):
             epsilon (float, optional): Small constant added to the denominator
                 for numerical stability. Defaults to 1e-38.
         """
-        super(WeightedR2Loss, self).__init__()
+        super().__init__()
         self.epsilon = epsilon
 
     def forward(

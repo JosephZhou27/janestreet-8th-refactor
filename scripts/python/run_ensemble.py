@@ -2,10 +2,10 @@
 
 import numpy as np
 
-from janestreet.setup_env import setup_environment
-from janestreet.pipeline import FullPipeline, PipelineCV, PipelineEnsemble
-from janestreet.models.nn import NN
 from janestreet.data_processor import DataProcessor
+from janestreet.models.nn import NN
+from janestreet.pipeline import FullPipeline, PipelineCV, PipelineEnsemble
+from janestreet.setup_env import setup_environment
 from janestreet.tracker import WandbTracker
 
 TRACK = False
