@@ -1,5 +1,4 @@
-"""Custom data processor for feature engineering and transformation.
-"""
+"""Custom data processor for feature engineering and transformation."""
 
 import os
 import joblib
@@ -8,6 +7,7 @@ import polars as pl
 from janestreet.config import PATH_DATA, PATH_MODELS
 from janestreet import utils
 from janestreet.transformers import PolarsTransformer
+
 
 class DataProcessor:
     """Custom data processor for feature engineering and transformation.
@@ -27,37 +27,35 @@ class DataProcessor:
         transformer (PolarsTransformer or None): Transformer for data preprocessing.
         features (list[str]): List of feature columns after processing.
     """
+
     PATH = os.path.join(PATH_MODELS, "data_processors")
 
     COLS_FEATURES_INIT = [f"feature_{i:02d}" for i in range(79)]
 
     COLS_FEATURES_CORR = [
-        'feature_06',
-        'feature_04',
-        'feature_07',
-        'feature_36',
-        'feature_60',
-        'feature_45',
-        'feature_56',
-        'feature_05',
-        'feature_51',
-        'feature_19',
-        'feature_66',
-        'feature_59',
-        'feature_54',
-        'feature_70',
-        'feature_71', 
-        'feature_72',
+        "feature_06",
+        "feature_04",
+        "feature_07",
+        "feature_36",
+        "feature_60",
+        "feature_45",
+        "feature_56",
+        "feature_05",
+        "feature_51",
+        "feature_19",
+        "feature_66",
+        "feature_59",
+        "feature_54",
+        "feature_70",
+        "feature_71",
+        "feature_72",
     ]
     COLS_FEATURES_CAT = ["feature_09", "feature_10", "feature_11"]
 
     T = 1000
 
     def __init__(
-        self,
-        name: str,
-        skip_days: int = None,
-        transformer: PolarsTransformer | None = None
+        self, name: str, skip_days: int = None, transformer: PolarsTransformer | None = None
     ):
         """Initializes the DataProcessor.
 
@@ -91,15 +89,16 @@ class DataProcessor:
         # Additional responders
         # (8- and 60-days moving average)
         df = df.with_columns(
-            (
-                pl.col("responder_8")
-                + pl.col("responder_8").shift(-4).over("symbol_id")
-            ).fill_null(0.0).alias("responder_9"),
+            (pl.col("responder_8") + pl.col("responder_8").shift(-4).over("symbol_id"))
+            .fill_null(0.0)
+            .alias("responder_9"),
             (
                 pl.col("responder_6")
                 + pl.col("responder_6").shift(-20).over("symbol_id")
                 + pl.col("responder_6").shift(-40).over("symbol_id")
-            ).fill_null(0.0).alias("responder_10"),
+            )
+            .fill_null(0.0)
+            .alias("responder_10"),
         )
 
         df = self._add_features(df)
@@ -117,7 +116,7 @@ class DataProcessor:
         fast: bool = False,
         date_id: int = 0,
         time_id: int = 0,
-        symbols: list = None
+        symbols: list = None,
     ) -> pl.DataFrame:
         """Processes test data.
 
@@ -137,8 +136,7 @@ class DataProcessor:
         return df
 
     def _save(self):
-        """Saves the data processor to disk.
-        """
+        """Saves the data processor to disk."""
         joblib.dump(self, f"{self.PATH}/{self.name}.joblib")
 
     def load(self):
@@ -155,10 +153,10 @@ class DataProcessor:
         Returns:
             pl.DataFrame: Loaded training data.
         """
-        df = pl.scan_parquet(f'{PATH_DATA}/train.parquet')
+        df = pl.scan_parquet(f"{PATH_DATA}/train.parquet")
         df = df.drop("partition_id")
         if self.skip_days is not None:
-            df = df.filter(pl.col("date_id")>=self.skip_days)
+            df = df.filter(pl.col("date_id") >= self.skip_days)
         return df
 
     def _add_features(
@@ -167,7 +165,7 @@ class DataProcessor:
         fast: bool = False,
         date_id: int | None = None,
         time_id: int | None = None,
-        symbols: list = None
+        symbols: list = None,
     ) -> pl.DataFrame:
         """Adds features to the data.
 
@@ -188,13 +186,12 @@ class DataProcessor:
             fast=fast,
             date_id=date_id,
             time_id=time_id,
-            symbols=symbols
+            symbols=symbols,
         )
         df = self._get_market_average(df, self.COLS_FEATURES_CORR, fast=fast)
 
         df = df.with_columns(
             pl.col("time_id").alias("feature_time_id"),
-
         )
         return df
 
@@ -206,7 +203,7 @@ class DataProcessor:
         fast: bool = False,
         date_id: int | None = None,
         time_id: int | None = None,
-        symbols: list = None
+        symbols: list = None,
     ) -> pl.DataFrame:
         """Computes rolling averages and standard deviations.
 
@@ -224,45 +221,52 @@ class DataProcessor:
             pl.DataFrame: DataFrame with rolling averages and standard deviations.
         """
         if not fast:
-            df = df.with_columns([
-                pl.col(col).rolling_mean(window_size=n)
-                .over(["symbol_id"]).alias(f"{col}_rolling_avg_{n}")
-                for col in cols
-            ] + [
-                pl.col(col).rolling_std(window_size=n)
-                .over(["symbol_id"]).alias(f"{col}_rolling_std_{n}")
-                for col in cols
-            ])
+            df = df.with_columns(
+                [
+                    pl.col(col)
+                    .rolling_mean(window_size=n)
+                    .over(["symbol_id"])
+                    .alias(f"{col}_rolling_avg_{n}")
+                    for col in cols
+                ]
+                + [
+                    pl.col(col)
+                    .rolling_std(window_size=n)
+                    .over(["symbol_id"])
+                    .alias(f"{col}_rolling_std_{n}")
+                    for col in cols
+                ]
+            )
         else:
-            df = df.group_by("symbol_id").agg([
-                pl.col(col).mean().alias(f"{col}_rolling_avg_{n}")
-                for col in cols
-            ] + [
-                pl.col(col).std().alias(f"{col}_rolling_std_{n}")
-                for col in cols
-            ] + [
-                pl.col(col).last().alias(col)
-                for col in self.COLS_FEATURES_INIT + ["row_id", "weight", "is_scored"]
-            ]).filter(pl.col("symbol_id").is_in(symbols))
+            df = (
+                df.group_by("symbol_id")
+                .agg(
+                    [pl.col(col).mean().alias(f"{col}_rolling_avg_{n}") for col in cols]
+                    + [pl.col(col).std().alias(f"{col}_rolling_std_{n}") for col in cols]
+                    + [
+                        pl.col(col).last().alias(col)
+                        for col in self.COLS_FEATURES_INIT + ["row_id", "weight", "is_scored"]
+                    ]
+                )
+                .filter(pl.col("symbol_id").is_in(symbols))
+            )
             df = df.with_columns(
                 pl.lit(date_id).cast(pl.Int16).alias("date_id"),
-                pl.lit(time_id).cast(pl.Int16).alias("time_id")
+                pl.lit(time_id).cast(pl.Int16).alias("time_id"),
             )
 
-        df = df.with_columns([
-            (pl.col(col) - pl.col(f"{col}_rolling_avg_{n}")).alias(f"{col}_diff_rolling_avg_{n}")
-            for col in cols
-        ])
+        df = df.with_columns(
+            [
+                (pl.col(col) - pl.col(f"{col}_rolling_avg_{n}")).alias(
+                    f"{col}_diff_rolling_avg_{n}"
+                )
+                for col in cols
+            ]
+        )
         df = df.drop([f"{col}_rolling_avg_{n}" for col in cols])
         return df
 
-
-    def _get_market_average(
-        self,
-        df: pl.DataFrame,
-        cols: list,
-        fast: bool = False
-    ) -> pl.DataFrame:
+    def _get_market_average(self, df: pl.DataFrame, cols: list, fast: bool = False) -> pl.DataFrame:
         """Computes market averages (average per date_id and time_id).
 
         Args:
@@ -274,17 +278,17 @@ class DataProcessor:
             pl.DataFrame: DataFrame with market averages.
         """
         if not fast:
-            df = df.with_columns([
-                pl.col(col)
-                .mean().over(["date_id", "time_id"])
-                .alias(f"{col}_avg_per_date_time")
-                for col in cols
-            ])
+            df = df.with_columns(
+                [
+                    pl.col(col)
+                    .mean()
+                    .over(["date_id", "time_id"])
+                    .alias(f"{col}_avg_per_date_time")
+                    for col in cols
+                ]
+            )
         else:
-            df = df.with_columns([
-                pl.col(col)
-                .mean()
-                .alias(f"{col}_avg_per_date_time")
-                for col in cols
-            ])
+            df = df.with_columns(
+                [pl.col(col).mean().alias(f"{col}_avg_per_date_time") for col in cols]
+            )
         return df

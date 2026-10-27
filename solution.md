@@ -44,15 +44,16 @@ I used 4 responders as auxiliary targets: `responder_7` and `responder_8`, and t
 
 ```python
 df = df.with_columns(
-    (
-        pl.col("responder_8")
-        + pl.col("responder_8").shift(-4).over("symbol_id")
-    ).fill_null(0.0).alias("responder_9"),
+    (pl.col("responder_8") + pl.col("responder_8").shift(-4).over("symbol_id"))
+    .fill_null(0.0)
+    .alias("responder_9"),
     (
         pl.col("responder_6")
         + pl.col("responder_6").shift(-20).over("symbol_id")
         + pl.col("responder_6").shift(-40).over("symbol_id")
-    ).fill_null(0.0).alias("responder_10"),
+    )
+    .fill_null(0.0)
+    .alias("responder_10"),
 )
 ```
 

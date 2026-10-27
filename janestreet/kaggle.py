@@ -51,8 +51,8 @@ def update_dataset(dataset_id: str, source_path: str) -> None:
     metadata = {
         "id": f"{KAGGLE_USERNAME}/{dataset_id}",
     }
-    metadata_path = temp_dir / 'dataset-metadata.json'
-    with open(metadata_path, 'w', encoding='utf-8') as f:
+    metadata_path = temp_dir / "dataset-metadata.json"
+    with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f)
 
     # Update the Kaggle dataset
@@ -90,8 +90,8 @@ def upload_code(dataset_id: str, source_path: str) -> None:
         "id": f"{KAGGLE_USERNAME}/{dataset_id}",
     }
 
-    metadata_path = source_path / 'dataset-metadata.json'
-    with open(metadata_path, 'w', encoding='utf-8') as f:
+    metadata_path = source_path / "dataset-metadata.json"
+    with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f)
 
     run_shell_command(

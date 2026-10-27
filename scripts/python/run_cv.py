@@ -1,5 +1,4 @@
-"""Run model on CV.
-"""
+"""Run model on CV."""
 
 from janestreet.setup_env import setup_environment
 from janestreet.pipeline import FullPipeline, PipelineCV
@@ -29,26 +28,22 @@ features = data_processor.features
 
 params_nn = {
     "model_type": "gru",
-
     # ### Model 1
     # "hidden_sizes": [250, 150, 150],
     # "dropout_rates": [0.0, 0.0, 0.0],
     # "hidden_sizes_linear": [],
     # "dropout_rates_linear": [],
     # ###
-
     ### Model 2
     "hidden_sizes": [500],
     "dropout_rates": [0.3, 0.0, 0.0],
     "hidden_sizes_linear": [500, 300],
     "dropout_rates_linear": [0.2, 0.1],
     ###
-
     "batch_size": 1,
     "early_stopping_patience": 1,
     "lr_refit": 0.0003,
     "lr": 0.0005,
-
     "epochs": 1000,
     "early_stopping": True,
     "lr_patience": 1000,
@@ -81,16 +76,11 @@ for SEED in range(3):
         params["n_splits"] = N_SPLITS
         params["seed"] = SEED
         params["start"] = START
-        wandb_tracker = WandbTracker(
-            MODEL_NAME,
-            params,
-            category=CATEGORY,
-            comment=COMMENT
-        )
+        wandb_tracker = WandbTracker(MODEL_NAME, params, category=CATEGORY, comment=COMMENT)
         wandb_tracker.init_run(features)
 
     cv = PipelineCV(pipeline, wandb_tracker, n_splits=N_SPLITS, train_size=TRAIN_SIZE)
     scores = cv.fit(df, verbose=True)
-    
+
     if wandb_tracker is not None:
         wandb_tracker.finish()

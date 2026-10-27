@@ -1,5 +1,5 @@
-"""Load model and test it on a sample of last 200 days with a gap of 200 days.
-"""
+"""Load model and test it on a sample of last 200 days with a gap of 200 days."""
+
 import numpy as np
 import polars as pl
 from tqdm.auto import tqdm
@@ -44,7 +44,7 @@ for NUM in [2, 3]:
             refit=True,
             change_lr=False,
         )
-        df_test = df.filter((pl.col(COL_DATE) >= 1499)&(pl.col(COL_DATE) < 1699))
+        df_test = df.filter((pl.col(COL_DATE) >= 1499) & (pl.col(COL_DATE) < 1699))
         df_valid = df.filter(pl.col(COL_DATE) >= 1299)
 
         pipeline.fit(verbose=True)
@@ -55,7 +55,7 @@ for NUM in [2, 3]:
         for date_id in tqdm(dates):
             df_valid_date = df.filter(pl.col(COL_DATE) == date_id)
             if pipeline.refit & (cnt_dates > 0):
-                df_valid_time = df.filter(pl.col(COL_DATE) == date_id-1)
+                df_valid_time = df.filter(pl.col(COL_DATE) == date_id - 1)
                 pipeline.update(df_valid_time)
             if date_id >= 1499:
                 preds_i, hidden = pipeline.predict(df_valid_date, n_times=None)

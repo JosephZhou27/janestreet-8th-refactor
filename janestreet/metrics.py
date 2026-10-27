@@ -5,11 +5,7 @@ import torch
 import torch.nn as nn
 
 
-def r2_weighted(
-    y_true: np.array,
-    y_pred: np.array,
-    sample_weight: np.array
-) -> float:
+def r2_weighted(y_true: np.array, y_pred: np.array, sample_weight: np.array) -> float:
     """Compute the weighted R² score.
 
     Args:
@@ -25,10 +21,9 @@ def r2_weighted(
     )
     return r2
 
+
 def r2_weighted_torch(
-    y_true: torch.Tensor,
-    y_pred: torch.Tensor,
-    sample_weight: torch.Tensor
+    y_true: torch.Tensor, y_pred: torch.Tensor, sample_weight: torch.Tensor
 ) -> torch.Tensor:
     """Compute the weighted R² score using PyTorch tensors.
 
@@ -45,24 +40,23 @@ def r2_weighted_torch(
     r2 = 1 - (numerator / denominator)
     return r2
 
+
 class WeightedR2Loss(nn.Module):
     """PyTorch loss function for weighted R²."""
+
     def __init__(self, epsilon: float = 1e-38) -> None:
         """
         Initialize the WeightedR2Loss class.
 
         Args:
-            epsilon (float, optional): Small constant added to the denominator 
+            epsilon (float, optional): Small constant added to the denominator
                 for numerical stability. Defaults to 1e-38.
         """
         super(WeightedR2Loss, self).__init__()
         self.epsilon = epsilon
 
     def forward(
-        self,
-        y_pred: torch.Tensor,
-        y_true: torch.Tensor,
-        weights: torch.Tensor
+        self, y_pred: torch.Tensor, y_true: torch.Tensor, weights: torch.Tensor
     ) -> torch.Tensor:
         """Compute the weighted R² loss.
 

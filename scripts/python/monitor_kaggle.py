@@ -1,8 +1,8 @@
 """Monitor Kaggle Submissions and Send Slack Notifications.
 
-This module monitors Kaggle competition submissions and sends notifications 
-to a configured Slack channel when new submissions are detected or when 
-the status of existing submissions changes (e.g., from "pending" to "complete"). 
+This module monitors Kaggle competition submissions and sends notifications
+to a configured Slack channel when new submissions are detected or when
+the status of existing submissions changes (e.g., from "pending" to "complete").
 
 Features:
 - Fetches Kaggle submissions using the Kaggle API.
@@ -32,7 +32,6 @@ Example `.env` file:
     KAGGLE_COMPETITION_ID=your-competition-id
 """
 
-
 import os
 import time
 import requests
@@ -47,7 +46,7 @@ load_dotenv()
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL")
 submission_statuses = {}
 first_iteration = True
-local_timezone = pytz.timezone('Europe/London')
+local_timezone = pytz.timezone("Europe/London")
 
 
 def send_slack_notification(message):
@@ -110,10 +109,11 @@ def check_submissions():
     print(f"{current_time}: Fetching Kaggle submissions...")
 
     kaggle_competition_id = os.getenv("KAGGLE_COMPETITION_ID")
-    result = subprocess.run([
-        'kaggle', 'competitions', 'submissions',
-        '-c', kaggle_competition_id, '--csv'
-    ], stdout=subprocess.PIPE, universal_newlines=True)
+    result = subprocess.run(
+        ["kaggle", "competitions", "submissions", "-c", kaggle_competition_id, "--csv"],
+        stdout=subprocess.PIPE,
+        universal_newlines=True,
+    )
     submissions = result.stdout
 
     reader = csv.reader(submissions.splitlines())
@@ -127,19 +127,25 @@ def check_submissions():
         date_time = convert_to_local_time(date)
         timestamp = local_time_to_timestamp(date_time)
 
-        print(f"{current_time}: {fileName}, {date_time}, {description}, {status}, {publicScore}, {timestamp}")
+        print(
+            f"{current_time}: {fileName}, {date_time}, {description}, {status}, {publicScore}, {timestamp}"
+        )
 
         if timestamp not in submission_statuses:
             if first_iteration:
                 submission_statuses[timestamp] = status
             else:
                 submission_statuses[timestamp] = status
-                notification_message = (f"*{current_time}* :rocket: *New Kaggle Submission Detected*\n"
-                                        f"> *Submission:* `{description}`\n"
-                                        f"> *Submitted at:* `{date_time}`\n"
-                                        f"> *Status:* `{status}`\n"
-                                        f"> *Score:* `{publicScore}`")
-                print(f"{current_time}: New submission detected: {description} at {date_time}. Status: {status}.")
+                notification_message = (
+                    f"*{current_time}* :rocket: *New Kaggle Submission Detected*\n"
+                    f"> *Submission:* `{description}`\n"
+                    f"> *Submitted at:* `{date_time}`\n"
+                    f"> *Status:* `{status}`\n"
+                    f"> *Score:* `{publicScore}`"
+                )
+                print(
+                    f"{current_time}: New submission detected: {description} at {date_time}. Status: {status}."
+                )
                 send_slack_notification(notification_message)
         else:
             if status == "complete" and submission_statuses.get(timestamp) == "pending":
@@ -148,13 +154,15 @@ def check_submissions():
                 execution_time = current_timestamp - timestamp
                 execution_hours = int(execution_time // 3600)
                 execution_minutes = int((execution_time % 3600) // 60)
-                notification_message = (f"*{current_time}* :bell: *Kaggle Submission Update*\n"
-                                        f"> *Submission:* `{description}`\n"
-                                        f"> *Submitted at:* `{date_time}`\n"
-                                        f"> *Completed at:* `{current_time}`\n"
-                                        f"> *Status:* `{status}`\n"
-                                        f"> *Score:* `{publicScore}`\n"
-                                        f"> *Time taken:* `{execution_hours}h {execution_minutes}m`")
+                notification_message = (
+                    f"*{current_time}* :bell: *Kaggle Submission Update*\n"
+                    f"> *Submission:* `{description}`\n"
+                    f"> *Submitted at:* `{date_time}`\n"
+                    f"> *Completed at:* `{current_time}`\n"
+                    f"> *Status:* `{status}`\n"
+                    f"> *Score:* `{publicScore}`\n"
+                    f"> *Time taken:* `{execution_hours}h {execution_minutes}m`"
+                )
                 print(
                     f"{current_time}: Submission at {date_time} "
                     f"(timestamp: {timestamp}) with description {description} "

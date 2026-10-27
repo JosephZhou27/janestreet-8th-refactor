@@ -32,13 +32,13 @@ def run_shell_command(command: str, cwd: str = None) -> None:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True,
-            universal_newlines=True
+            universal_newlines=True,
         )
 
         # Print the output in real-time
         while True:
             output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
+            if output == "" and process.poll() is not None:
                 break
             if output:
                 print(output.strip())

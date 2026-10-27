@@ -4,12 +4,12 @@ import os
 from pathlib import Path
 
 # Determine the execution environment based on environment variables
-KAGGLE = 'KAGGLE_URL_BASE' in os.environ
+KAGGLE = "KAGGLE_URL_BASE" in os.environ
 VASTAI = not KAGGLE
 
 # Define base paths for different environments (change if needed)
 # Data and models can be stored on a different volume
-# Path with data should contain subdirectoriy "data" 
+# Path with data should contain subdirectoriy "data"
 # with data from https://www.kaggle.com/competitions/jane-street-real-time-market-data-forecasting/data
 base_paths = {
     "VASTAI": Path("/home/janestreet2024"),

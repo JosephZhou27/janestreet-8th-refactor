@@ -1,6 +1,6 @@
 """Custom pipeline classes.
 
-These classes are designed to facilitate model training, cross-validation, and testing 
+These classes are designed to facilitate model training, cross-validation, and testing
 on time series data, with additional functionalities for model management.
 
 Classes:
@@ -52,18 +52,19 @@ class FullPipeline:
         change_lr (bool): Flag indicating whether to change learning rate (if load is True).
         col_target (str): Name of the target column.
     """
+
     def __init__(
-            self,
-            model: BaseEstimator,
-            preprocessor = None,
-            run_name: str = "",
-            name: str = "",
-            load_model: bool = False,
-            features: list | None = None,
-            save_to_disc: bool = True,
-            refit = True,
-            change_lr = False,
-            col_target = COL_TARGET,
+        self,
+        model: BaseEstimator,
+        preprocessor=None,
+        run_name: str = "",
+        name: str = "",
+        load_model: bool = False,
+        features: list | None = None,
+        save_to_disc: bool = True,
+        refit=True,
+        change_lr=False,
+        col_target=COL_TARGET,
     ) -> None:
         """Initializes the FullPipeline.
 
@@ -152,7 +153,7 @@ class FullPipeline:
                 weights_train,
                 stocks_train,
                 dates_train,
-                times_train
+                times_train,
             )
             val_set = (
                 X_valid,
@@ -161,7 +162,7 @@ class FullPipeline:
                 weights_valid,
                 stocks_valid,
                 dates_valid,
-                times_valid
+                times_valid,
             )
 
             del df, df_valid
@@ -177,7 +178,7 @@ class FullPipeline:
         self,
         df: pl.DataFrame,
         hidden: torch.Tensor | list | None = None,
-        n_times: int | None = None
+        n_times: int | None = None,
     ) -> tuple[np.ndarray, torch.Tensor | list]:
         """Predicts target using the fitted model.
 
@@ -281,16 +282,17 @@ class PipelineEnsemble:
     Attributes:
         models (list): List of models to be used in the ensemble.
         weights (np.ndarray): Array of weights for averaging predictions.
-        refit_models (list[bool]): Flags indicating whether each model 
+        refit_models (list[bool]): Flags indicating whether each model
                                    should be refit during updates.
         col_target (str): Name of the target column.
     """
+
     def __init__(
         self,
         models: list,
         weights: np.array = None,
         refit_models: list[bool] = None,
-        col_target: str = COL_TARGET
+        col_target: str = COL_TARGET,
     ) -> None:
         """Initializes the PipelineEnsemble.
 
@@ -302,7 +304,7 @@ class PipelineEnsemble:
         """
         self.models = models
         self.weights = weights if weights is not None else np.ones(len(self.models))
-        self.refit_models = refit_models if refit_models is not None else [True]*len(models)
+        self.refit_models = refit_models if refit_models is not None else [True] * len(models)
         self.col_target = col_target
         self.refit = True
 
@@ -366,16 +368,13 @@ class PipelineEnsemble:
             if self.refit_models[i]:
                 model.update(df)
 
-
     def load(self) -> None:
-        """Loads all models in the ensemble from disk.
-        """
+        """Loads all models in the ensemble from disk."""
         for model in self.models:
             model.model.load()
 
     def save(self) -> None:
-        """Saves all models in the ensemble to disk.
-        """
+        """Saves all models in the ensemble to disk."""
         for model in self.models:
             model.model.save()
 
@@ -408,6 +407,7 @@ class PipelineEnsemble:
             setattr(self, parameter, value)
         return self
 
+
 class PipelineCV:
     """Cross-validation pipeline for time series models.
 
@@ -421,12 +421,13 @@ class PipelineCV:
         train_size (int): Maximum size of the training set.
         models (list): List of models fitted on each fold.
     """
+
     def __init__(
-            self,
-            model: FullPipeline,
-            tracker: WandbTracker,
-            n_splits: int,
-            train_size: int = False,
+        self,
+        model: FullPipeline,
+        tracker: WandbTracker,
+        n_splits: int,
+        train_size: int = False,
     ) -> None:
         """Initializes the PipelineCV.
 
@@ -462,18 +463,16 @@ class PipelineCV:
             TEST_SIZE
             if len(dates_unique) > TEST_SIZE * (self.n_splits + 1)
             else len(dates_unique) // (self.n_splits + 1)
-        ) # For testing purposes on small samples
+        )  # For testing purposes on small samples
         cv = TimeSeriesSplit(
-            n_splits=self.n_splits,
-            test_size=test_size,
-            max_train_size=self.train_size
+            n_splits=self.n_splits, test_size=test_size, max_train_size=self.train_size
         )
         cv_split = cv.split(dates_unique)
 
         scores = []
         for fold, (train_idx, valid_idx) in enumerate(cv_split):
             if verbose:
-                print("-"*20 + f"Fold {fold}" + "-"*20)
+                print("-" * 20 + f"Fold {fold}" + "-" * 20)
                 print(
                     f"Train dates from {dates_unique[train_idx].min()}"
                     f" to {dates_unique[train_idx].max()}"
@@ -502,7 +501,7 @@ class PipelineCV:
                 df_valid_date = df_valid.filter(pl.col(COL_DATE) == date_id)
 
                 if model_fold.refit & (cnt_dates > 0):
-                    df_upd = df.filter(pl.col(COL_DATE)==date_id-1)
+                    df_upd = df.filter(pl.col(COL_DATE) == date_id - 1)
                     if len(df_upd) > 0:
                         model_save.update(df_upd)
 
@@ -526,8 +525,7 @@ class PipelineCV:
         return scores
 
     def load(self) -> None:
-        """Loads models for each fold from disk.
-        """
+        """Loads models for each fold from disk."""
         self.models = []
         for i in range(self.n_splits):
             model = clone(self.model)
