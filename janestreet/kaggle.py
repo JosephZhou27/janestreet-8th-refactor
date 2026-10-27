@@ -13,7 +13,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from .config import KAGGLE_USERNAME, base_path
+from .config import KAGGLE_USERNAME, get_settings
 from .utils import run_shell_command
 
 
@@ -77,7 +77,7 @@ def upload_code(dataset_id: str, source_path: str) -> None:
         This function builds a Python package in the project directory
         with `uv build`, and then uploads it to the specified Kaggle
     """
-    os.chdir(base_path)
+    os.chdir(get_settings().project_dir)
     run_shell_command("uv build")
 
     original_source_path = Path(source_path)

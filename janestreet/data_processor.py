@@ -1,13 +1,11 @@
 """Custom data processor for feature engineering and transformation."""
 
-import os
 from typing import ClassVar
 
 import joblib
 import polars as pl
 
-from janestreet import utils
-from janestreet.config import PATH_DATA, PATH_MODELS
+from janestreet.config import get_settings
 from janestreet.transformers import PolarsTransformer
 
 
@@ -19,7 +17,6 @@ class DataProcessor:
     and market averages.
 
     Attributes:
-        PATH (str): Path to save and load data processors.
         COLS_FEATURES_INIT (list[str]): Initial feature columns.
         COLS_FEATURES_CORR (list[str]): Correlated feature columns for additional processing.
         COLS_FEATURES_CAT (list[str]): Categorical feature columns.
@@ -29,8 +26,6 @@ class DataProcessor:
         transformer (PolarsTransformer or None): Transformer for data preprocessing.
         features (list[str]): List of feature columns after processing.
     """
-
-    PATH = os.path.join(PATH_MODELS, "data_processors")
 
     COLS_FEATURES_INIT: ClassVar[list[str]] = [f"feature_{i:02d}" for i in range(79)]
 
@@ -78,7 +73,7 @@ class DataProcessor:
         self.features += ["feature_time_id"]
         self.features = [i for i in self.features if i not in self.COLS_FEATURES_CAT]
 
-        utils.create_folder(self.PATH)
+        self.path = get_settings().models_dir / "data_processors"
 
     def get_train_data(self) -> pl.DataFrame:
         """Loads, processes, and returns training data.
@@ -139,7 +134,8 @@ class DataProcessor:
 
     def _save(self):
         """Saves the data processor to disk."""
-        joblib.dump(self, f"{self.PATH}/{self.name}.joblib")
+        self.path.mkdir(parents=True, exist_ok=True)
+        joblib.dump(self, self.path / f"{self.name}.joblib")
 
     def load(self):
         """Loads the data processor from disk.
@@ -147,7 +143,7 @@ class DataProcessor:
         Returns:
             DataProcessor: Loaded data processor.
         """
-        return joblib.load(f"{self.PATH}/{self.name}.joblib")
+        return joblib.load(self.path / f"{self.name}.joblib")
 
     def _load_data(self) -> pl.DataFrame:
         """Loads the training data from disk.
@@ -155,7 +151,7 @@ class DataProcessor:
         Returns:
             pl.DataFrame: Loaded training data.
         """
-        df = pl.scan_parquet(f"{PATH_DATA}/train.parquet")
+        df = pl.scan_parquet(get_settings().data_dir / "train.parquet")
         df = df.drop("partition_id")
         if self.skip_days is not None:
             df = df.filter(pl.col("date_id") >= self.skip_days)
