@@ -3,7 +3,8 @@
 import pandas as pd
 import wandb
 
-from .config import  WANDB_PROJECT, base_path
+from .config import WANDB_PROJECT, base_path
+
 
 class WandbTracker:
     """Custom class for tracking experiments using WandB.
@@ -18,13 +19,7 @@ class WandbTracker:
         comment (str): Comment or description for the run.
     """
 
-    def __init__(
-        self,
-        run_name: str,
-        params: dict,
-        category: str,
-        comment: str
-    ) -> None:
+    def __init__(self, run_name: str, params: dict, category: str, comment: str) -> None:
         """Initializes the WandbTracker class.
 
         Args:
@@ -46,18 +41,16 @@ class WandbTracker:
             features (list): List of features used in the model.
         """
         config = self.params.copy()
-        config.update({
-            "model": "lgb",
-            "category": self.category,
-            "comment": self.comment,
-            "n_features": len(features)
-        })
+        config.update(
+            {
+                "model": "lgb",
+                "category": self.category,
+                "comment": self.comment,
+                "n_features": len(features),
+            }
+        )
         wandb.init(
-            project=WANDB_PROJECT,
-            name=self.run_name,
-            config=config,
-            dir=base_path,
-            save_code=True
+            project=WANDB_PROJECT, name=self.run_name, config=config, dir=base_path, save_code=True
         )
         self.save_features(features)
         print(f"Running {self.run_name} model.")
@@ -73,10 +66,7 @@ class WandbTracker:
         with open(feature_file_path, "w", encoding="utf-8") as file:
             for feature in features:
                 file.write(f"{feature}\n")
-        artifact = wandb.Artifact(
-            name=f"{self.run_name}-feature-list",
-            type="dataset"
-        )
+        artifact = wandb.Artifact(name=f"{self.run_name}-feature-list", type="dataset")
         artifact.add_file(feature_file_path)
         wandb.log_artifact(artifact)
 
@@ -96,11 +86,7 @@ class WandbTracker:
         Args:
             text (str): Text of the alert.
         """
-        wandb.alert(
-            title=f'Run {self.run_name} finished.',
-            text=text,
-            level=wandb.AlertLevel.INFO
-        )
+        wandb.alert(title=f"Run {self.run_name} finished.", text=text, level=wandb.AlertLevel.INFO)
 
     def log_metrics(self, metrics: dict) -> None:
         """Logs metrics to the current WandB run.
@@ -135,6 +121,5 @@ class WandbTracker:
         run.update()
 
     def finish(self) -> None:
-        """Finishes the current WandB run.
-        """
+        """Finishes the current WandB run."""
         wandb.finish()

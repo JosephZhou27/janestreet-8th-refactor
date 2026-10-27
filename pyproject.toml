@@ -25,6 +25,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5,<7",
+    "ruff>=0.17.3",
 ]
 
 [build-system]
@@ -33,3 +34,9 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-root = ""
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF"]

@@ -1,23 +1,21 @@
-"""Run model for final submission.
-"""
+"""Run model for final submission."""
 
 import numpy as np
 import polars as pl
 from tqdm.auto import tqdm
 
-from janestreet.setup_env import setup_environment
-from janestreet.pipeline import FullPipeline
-from janestreet.models.nn import NN
-from janestreet.config import COL_DATE, COL_WEIGHT, COL_TARGET
+from janestreet.config import COL_DATE, COL_TARGET, COL_WEIGHT
 from janestreet.data_processor import DataProcessor
 from janestreet.metrics import r2_weighted
+from janestreet.models.nn import NN
+from janestreet.pipeline import FullPipeline
+from janestreet.setup_env import setup_environment
 from janestreet.transformers import PolarsTransformer
-
 
 MODEL_TYPE = "gru"
 START = 500
 NUM = 3
-EPOCHS_LS = [8]*10
+EPOCHS_LS = [8] * 10
 COMMENT = ""
 CATEGORY = "model_ver22_ts"
 
@@ -27,35 +25,29 @@ REFIT = True
 setup_environment()
 
 data_processor = DataProcessor(
-    f"{MODEL_TYPE}_{NUM}.0_700",
-    skip_days=START,
-    transformer=PolarsTransformer()
+    f"{MODEL_TYPE}_{NUM}.0_700", skip_days=START, transformer=PolarsTransformer()
 )
 df = data_processor.get_train_data()
 features = data_processor.features
 
 params_nn = {
     "model_type": "gru",
-
     ### Model 1
     "hidden_sizes": [250, 150, 150],
     "dropout_rates": [0.0, 0.0, 0.0],
     "hidden_sizes_linear": [],
     "dropout_rates_linear": [],
     ###
-
     ### Model 2
     # "hidden_sizes": [500],
     # "dropout_rates": [0.3, 0.0, 0.0],
     # "hidden_sizes_linear": [500, 300],
     # "dropout_rates_linear": [0.2, 0.1],
     ###
-
     "batch_size": 1,
     "early_stopping_patience": 1,
     "lr_refit": 0.0003,
     "lr": 0.0005,
-
     "epochs": 100,
     "early_stopping": True,
     "lr_patience": 10,
@@ -78,8 +70,8 @@ for SEED in range(3):
         print(f"Running final model with {params_nn['epochs']} epochs.")
     model = NN(**params_nn, random_seed=SEED)
 
-    df_train = df.filter(pl.col(COL_DATE) >= START+200)
-    df_valid = df.filter(pl.col(COL_DATE) < START+200)
+    df_train = df.filter(pl.col(COL_DATE) >= START + 200)
+    df_valid = df.filter(pl.col(COL_DATE) < START + 200)
 
     pipeline = FullPipeline(
         model,
@@ -92,17 +84,15 @@ for SEED in range(3):
     )
     pipeline.fit(df_train, df_valid, verbose=True)
 
-    cnt_dates = 0
     preds = []
     dates = np.unique(df_valid.select(pl.col(COL_DATE)).to_series().to_numpy())
-    for date_id in tqdm(dates):
+    for cnt_dates, date_id in enumerate(tqdm(dates)):
         df_valid_date = df.filter(pl.col(COL_DATE) == date_id)
         if pipeline.refit & (cnt_dates > 0):
-            df_valid_upd = df.filter(pl.col(COL_DATE) == date_id-1)
+            df_valid_upd = df.filter(pl.col(COL_DATE) == date_id - 1)
             pipeline.update(df_valid_upd)
         preds_i, hidden = pipeline.predict(df_valid_date, n_times=None)
         preds += list(preds_i)
-        cnt_dates += 1
 
     preds = np.array(preds)
     y = df_valid.select(pl.col(COL_TARGET)).to_series().to_numpy()

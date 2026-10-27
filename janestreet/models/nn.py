@@ -1,14 +1,14 @@
-"""Neural net.
-"""
-import copy
-import numpy as np
-from tqdm.auto import tqdm
+"""Neural net."""
 
+import copy
+
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
+from tqdm.auto import tqdm
 
-from janestreet.metrics import r2_weighted_torch, WeightedR2Loss
+from janestreet.metrics import WeightedR2Loss, r2_weighted_torch
 
 
 def flatten_collate_fn(batch: list) -> tuple[torch.Tensor]:
@@ -20,7 +20,7 @@ def flatten_collate_fn(batch: list) -> tuple[torch.Tensor]:
 
         tuple[torch.Tensor]: Flattened tensors (X, resp, y, weights).
     """
-    X, resp, y, weights = zip(*batch)
+    X, resp, y, weights = zip(*batch, strict=False)
     X = torch.cat(X, dim=0)
     resp = torch.cat(resp, dim=0)
     y = torch.cat(y, dim=0)
@@ -32,8 +32,8 @@ def flatten_collate_fn(batch: list) -> tuple[torch.Tensor]:
 class CustomTensorDataset(Dataset):
     """Dataset wrapping tensors, grouped by datetime.
 
-    The dataset groups data by dates, reshapes it to 3D 
-    (`dates * stocks x time_ids x features`), stores it, 
+    The dataset groups data by dates, reshapes it to 3D
+    (`dates * stocks x time_ids x features`), stores it,
     and returns data for a single date.
 
     Args:
@@ -44,9 +44,10 @@ class CustomTensorDataset(Dataset):
         symbols (ndarray or Tensor): Symbol IDs.
         dates (ndarray or Tensor): Date IDs.
         times (ndarray or Tensor): Time IDs.
-        on_batch (bool): If True, data is reshaped when calling `__getitem__`. 
+        on_batch (bool): If True, data is reshaped when calling `__getitem__`.
             Required if the number of time IDs per date is not uniform.
     """
+
     T = 968
 
     def __init__(
@@ -71,7 +72,7 @@ class CustomTensorDataset(Dataset):
             symbols (ndarray or Tensor): Symbol IDs.
             dates (ndarray or Tensor): Date IDs.
             times (ndarray or Tensor): Time IDs.
-            on_batch (bool): If True, data is reshaped when calling `__getitem__`. 
+            on_batch (bool): If True, data is reshaped when calling `__getitem__`.
                 Required if the number of time IDs per date is not uniform.
         """
         self.on_batch = on_batch
@@ -95,7 +96,9 @@ class CustomTensorDataset(Dataset):
 
             sorted_indices = torch.argsort(self.times, stable=True)
             sorted_indices = sorted_indices[torch.argsort(self.dates[sorted_indices], stable=True)]
-            sorted_indices = sorted_indices[torch.argsort(self.symbols[sorted_indices], stable=True)]
+            sorted_indices = sorted_indices[
+                torch.argsort(self.symbols[sorted_indices], stable=True)
+            ]
             self.X = self.X[sorted_indices]
             self.resp = self.resp[sorted_indices]
             self.dates = self.dates[sorted_indices]
@@ -103,13 +106,12 @@ class CustomTensorDataset(Dataset):
             self.weights = self.weights[sorted_indices]
             self.symbols = self.symbols[sorted_indices]
 
-            self.X = self.X.view(N//T, T, K)
-            self.resp = self.resp.view(N//T, T, self.resp.shape[-1])
-            self.dates = self.dates.view(N//T, T)[:,0].squeeze()
-            self.y = self.y.view(N//T, T)
-            self.weights = self.weights.view(N//T, T)
-            self.symbols = self.symbols.view(N//T, T)
-
+            self.X = self.X.view(N // T, T, K)
+            self.resp = self.resp.view(N // T, T, self.resp.shape[-1])
+            self.dates = self.dates.view(N // T, T)[:, 0].squeeze()
+            self.y = self.y.view(N // T, T)
+            self.weights = self.weights.view(N // T, T)
+            self.symbols = self.symbols.view(N // T, T)
 
         self.datetime_ids = self.dates
         self.unique_datetimes, self.inverse_indices, self.counts = torch.unique(
@@ -140,7 +142,7 @@ class CustomTensorDataset(Dataset):
         weights = self.weights[index]
 
         if self.on_batch:
-            T = max(self.times[index])+1
+            T = max(self.times[index]) + 1
             X = X.reshape(T, -1, self.K).swapaxes(0, 1)
             resp = resp.reshape(T, -1, resp.shape[1]).swapaxes(0, 1)
             y = y.reshape(T, -1).swapaxes(0, 1)
@@ -156,8 +158,8 @@ class CustomTensorDataset(Dataset):
 class ModelRBase(nn.Module):
     """Base recurrent model.
 
-    This class defines a recurrent neural network with GRU or LSTM layers, 
-    followed by fully connected (linear) layers. Dropout can be applied 
+    This class defines a recurrent neural network with GRU or LSTM layers,
+    followed by fully connected (linear) layers. Dropout can be applied
     after each recurrent and linear layer.
 
     Args:
@@ -171,6 +173,7 @@ class ModelRBase(nn.Module):
     Raises:
         ValueError: If `model_type` is not "gru" or "lstm".
     """
+
     def __init__(
         self,
         input_size: int,
@@ -178,7 +181,7 @@ class ModelRBase(nn.Module):
         dropout_rates: list,
         hidden_sizes_linear: list,
         dropout_rates_linear: list,
-        model_type: str
+        model_type: str,
     ) -> None:
         """
         Initializes the ModelRBase class.
@@ -194,7 +197,7 @@ class ModelRBase(nn.Module):
         Raises:
             ValueError: If `model_type` is not "gru" or "lstm".
         """
-        super(ModelRBase, self).__init__()
+        super().__init__()
         self.num_layers = len(hidden_sizes)
 
         self.gru_layers = nn.ModuleList()
@@ -210,10 +213,7 @@ class ModelRBase(nn.Module):
             self.gru_layers.append(layer)
             self.dropout_rates.append(nn.Dropout(dropout_rates[i]))
 
-        if self.num_layers == 0:
-            n_input_linear = input_size
-        else:
-            n_input_linear = hidden_sizes[-1]
+        n_input_linear = input_size if self.num_layers == 0 else hidden_sizes[-1]
 
         fc_layers = []
         if hidden_sizes_linear:
@@ -228,20 +228,22 @@ class ModelRBase(nn.Module):
 
         self.fc = nn.Sequential(*fc_layers)
 
-    def forward(self, x: torch.Tensor, hidden: bool = None) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, hidden: bool | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Forward pass of the model.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (D, T, input_size), 
-                where D is the batch size, T is the sequence length, 
+            x (torch.Tensor): Input tensor of shape (D, T, input_size),
+                where D is the batch size, T is the sequence length,
                 and `input_size` is the number of features.
-            hidden (bool, optional): Initial hidden state for the recurrent layers. 
+            hidden (bool, optional): Initial hidden state for the recurrent layers.
                 Defaults to None.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: A tuple containing:
-                - Output tensor of shape (D, T), where D is the batch size and 
+                - Output tensor of shape (D, T), where D is the batch size and
                   T is the sequence length.
                 - Hidden state tensor from the last recurrent layer.
         """
@@ -266,8 +268,8 @@ class ModelRBase(nn.Module):
 class ModelR(nn.Module):
     """Recurrent model with auxiliary targets.
 
-    This model uses multiple recurrent networks (GRU or LSTM) to predict both 
-    the primary target and auxiliary targets. The auxiliary targets are 
+    This model uses multiple recurrent networks (GRU or LSTM) to predict both
+    the primary target and auxiliary targets. The auxiliary targets are
     combined using a fully connected layer to produce the final output.
 
     Args:
@@ -278,6 +280,7 @@ class ModelR(nn.Module):
         dropout_rates_linear (list): List of dropout rates for the linear layers.
         model_type (str): Type of the model, either "gru" or "lstm".
     """
+
     def __init__(
         self,
         input_size: int,
@@ -285,7 +288,7 @@ class ModelR(nn.Module):
         dropout_rates: list,
         hidden_sizes_linear: list,
         dropout_rates_linear: list,
-        model_type: str
+        model_type: str,
     ):
         """
         Initializes the ModelR class.
@@ -298,7 +301,7 @@ class ModelR(nn.Module):
             dropout_rates_linear (list): List of dropout rates for the linear layers.
             model_type (str): Type of the model, either "gru" or "lstm".
         """
-        super(ModelR, self).__init__()
+        super().__init__()
         self.num_resp = 4
 
         self.grus = nn.ModuleList()
@@ -311,7 +314,7 @@ class ModelR(nn.Module):
                     dropout_rates,
                     hidden_sizes_linear,
                     dropout_rates_linear,
-                    model_type
+                    model_type,
                 )
             )
         self.out = nn.Sequential(
@@ -319,24 +322,22 @@ class ModelR(nn.Module):
         )
 
     def forward(
-        self,
-        x: torch.Tensor,
-        hidden: torch.Tensor | None = None
+        self, x: torch.Tensor, hidden: torch.Tensor | None = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Forward pass of the model.
 
         Args:
-            x (torch.Tensor): Input tensor of shape (D, T, input_size), 
-                where D is the batch size, T is the sequence length, 
+            x (torch.Tensor): Input tensor of shape (D, T, input_size),
+                where D is the batch size, T is the sequence length,
                 and `input_size` is the number of features.
-            hidden (torch.Tensor or None, optional): Initial hidden state for 
+            hidden (torch.Tensor or None, optional): Initial hidden state for
                 the recurrent layers. Defaults to None.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor]: A tuple containing:
                 - Output tensor (torch.Tensor): Final output tensor of shape (D, T).
-                - Auxiliary targets (torch.Tensor): Tensor of shape (D, T, num_resp), 
+                - Auxiliary targets (torch.Tensor): Tensor of shape (D, T, num_resp),
                   where `num_resp` is the number of auxiliary targets.
                 - Hidden state (torch.Tensor): Hidden state from the last recurrent layer.
         """
@@ -349,7 +350,7 @@ class ModelR(nn.Module):
         for i in range(len(self.grus)):
             z, h = self.grus[i](x, hidden[i])
             out.append(z)
-            out[i] = out[i].reshape(D*T, -1)
+            out[i] = out[i].reshape(D * T, -1)
             hidden[i] = h
         out_resp = torch.cat(out, dim=-1)
         y = self.out(out_resp)
@@ -359,11 +360,12 @@ class ModelR(nn.Module):
 
         return y, out_resp, hidden
 
+
 class NN:
     """Neural network model for time series data with auxiliary targets.
 
-    This class defines a recurrent neural network (GRU or LSTM) with 
-    optional linear layers and dropout. It includes functionality for 
+    This class defines a recurrent neural network (GRU or LSTM) with
+    optional linear layers and dropout. It includes functionality for
     training, validation, updating with new data, and making predictions.
 
     Args:
@@ -382,23 +384,24 @@ class NN:
         lr_refit (float, optional): Learning rate for model refitting. Defaults to 0.001.
         random_seed (int, optional): Random seed for reproducibility. Defaults to 42.
     """
+
     def __init__(
-            self,
-            model_type: str | None = None,
-            hidden_sizes: list | None = None,
-            dropout_rates: list | None = None,
-            hidden_sizes_linear: list | None = None,
-            dropout_rates_linear: list | None = None,
-            lr: float = 0.001,
-            batch_size: int = 1,
-            epochs: int = 100,
-            early_stopping_patience: int = 10,
-            early_stopping: bool = True,
-            lr_patience: int = 2,
-            lr_factor: float = 0.5,
-            lr_refit: float = 0.001,
-            random_seed: int = 42,
-        ) -> None:
+        self,
+        model_type: str | None = None,
+        hidden_sizes: list | None = None,
+        dropout_rates: list | None = None,
+        hidden_sizes_linear: list | None = None,
+        dropout_rates_linear: list | None = None,
+        lr: float = 0.001,
+        batch_size: int = 1,
+        epochs: int = 100,
+        early_stopping_patience: int = 10,
+        early_stopping: bool = True,
+        lr_patience: int = 2,
+        lr_factor: float = 0.5,
+        lr_refit: float = 0.001,
+        random_seed: int = 42,
+    ) -> None:
         """Initialize the NN model.
 
         Args:
@@ -452,18 +455,12 @@ class NN:
 
         train_dataset = CustomTensorDataset(*train_set, on_batch=False)
         train_dataloader = DataLoader(
-            train_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            collate_fn=flatten_collate_fn
+            train_dataset, batch_size=self.batch_size, shuffle=True, collate_fn=flatten_collate_fn
         )
 
         val_dataset = CustomTensorDataset(*val_set, on_batch=True)
         val_dataloader = DataLoader(
-            val_dataset,
-            batch_size=1,
-            shuffle=False,
-            collate_fn=flatten_collate_fn
+            val_dataset, batch_size=1, shuffle=False, collate_fn=flatten_collate_fn
         )
 
         self.model = ModelR(
@@ -472,7 +469,7 @@ class NN:
             self.dropout_rates,
             self.hidden_sizes_linear,
             self.dropout_rates_linear,
-            self.model_type
+            self.model_type,
         ).to(self.device)
 
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=0.01)
@@ -500,7 +497,7 @@ class NN:
 
             if verbose:
                 print(
-                    f"{epoch+1:^5} | {train_loss:^10.4f} | {val_loss:^8.4f} | "
+                    f"{epoch + 1:^5} | {train_loss:^10.4f} | {val_loss:^8.4f} | "
                     f"{train_r2:^9.4f} | {val_r2:^7.4f} | {lr_last:^7.5f}"
                 )
 
@@ -512,20 +509,15 @@ class NN:
             else:
                 no_improvement += 1
 
-            if self.early_stopping:
-                if no_improvement >= self.early_stopping_patience + 1:
-                    self.best_epoch = best_epoch+1
-                    if verbose:
-                        print(
-                            f"Early stopping on epoch {best_epoch+1}. "
-                            f"Best score: {min_val_r2:.4f}"
-                        )
-                    break
+            if self.early_stopping and no_improvement >= self.early_stopping_patience + 1:
+                self.best_epoch = best_epoch + 1
+                if verbose:
+                    print(f"Early stopping on epoch {best_epoch + 1}. Best score: {min_val_r2:.4f}")
+                break
 
         # Load the best model
         if self.early_stopping:
             self.model.load_state_dict(best_model)
-
 
     def train_one_epoch(self, train_dataloader: DataLoader, verbose: bool) -> None:
         """Train the model for one epoch.
@@ -543,41 +535,29 @@ class NN:
         total_loss = 0.0
 
         y_total, weights_total, preds_total = [], [], []
-        if verbose:
-            itr = tqdm(train_dataloader)
-        else:
-            itr = train_dataloader
+        itr = tqdm(train_dataloader) if verbose else train_dataloader
 
         for x_batch, resp_batch, y_batch, weights_batch in itr:
             x_batch, resp_batch, y_batch, weights_batch = (
-                item.to(self.device)
-                for item in [x_batch, resp_batch, y_batch, weights_batch]
+                item.to(self.device) for item in [x_batch, resp_batch, y_batch, weights_batch]
             )
 
             self.optimizer.zero_grad()
             out_y, out_resp, _ = self.model(x_batch, None)
             loss1 = self.criterion(out_y.flatten(), y_batch.flatten(), weights_batch.flatten())
             loss2 = self.criterion(
-                out_resp[:, :, 0].flatten(),
-                resp_batch[:, :, -1].flatten(),
-                weights_batch.flatten()
+                out_resp[:, :, 0].flatten(), resp_batch[:, :, -1].flatten(), weights_batch.flatten()
             )
             loss3 = self.criterion(
-                out_resp[:, :, 1].flatten(),
-                resp_batch[:, :, -2].flatten(),
-                weights_batch.flatten()
+                out_resp[:, :, 1].flatten(), resp_batch[:, :, -2].flatten(), weights_batch.flatten()
             )
             loss4 = self.criterion(
-                out_resp[:, :, 2].flatten(),
-                resp_batch[:, :, -3].flatten(),
-                weights_batch.flatten()
+                out_resp[:, :, 2].flatten(), resp_batch[:, :, -3].flatten(), weights_batch.flatten()
             )
             loss5 = self.criterion(
-                out_resp[:, :, 3].flatten(),
-                resp_batch[:, :, -4].flatten(),
-                weights_batch.flatten()
+                out_resp[:, :, 3].flatten(), resp_batch[:, :, -4].flatten(), weights_batch.flatten()
             )
-            loss = loss1+loss2+loss3+loss4+loss5
+            loss = loss1 + loss2 + loss3 + loss4 + loss5
             loss.backward()
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
 
@@ -598,7 +578,6 @@ class NN:
 
         return train_loss, train_r2
 
-
     def validate_one_epoch(self, val_dataloader: DataLoader, verbose=False) -> None:
         """Validate the model on the validation set.
 
@@ -615,14 +594,10 @@ class NN:
 
         losses, all_y, all_weights, all_preds = [], [], [], []
 
-        if verbose:
-            itr = tqdm(val_dataloader)
-        else:
-            itr = val_dataloader
+        itr = tqdm(val_dataloader) if verbose else val_dataloader
         for x_batch, resp_batch, y_batch, weights_batch in itr:
             x_batch, resp_batch, y_batch, weights_batch = (
-                item.to(self.device)
-                for item in [x_batch, resp_batch, y_batch, weights_batch]
+                item.to(self.device) for item in [x_batch, resp_batch, y_batch, weights_batch]
             )
 
             # Predict
@@ -630,9 +605,7 @@ class NN:
                 model.eval()
                 preds_batch, _, _ = model(x_batch, None)
                 loss = self.criterion(
-                    preds_batch.flatten(),
-                    y_batch.flatten(),
-                    weights_batch.flatten()
+                    preds_batch.flatten(), y_batch.flatten(), weights_batch.flatten()
                 )
                 losses.append(loss.item())
 
@@ -643,9 +616,7 @@ class NN:
             # Update weights
             if self.lr_refit > 0:
                 optimizer = torch.optim.AdamW(
-                    model.parameters(),
-                    lr=self.lr_refit,
-                    weight_decay=0.01
+                    model.parameters(), lr=self.lr_refit, weight_decay=0.01
                 )
                 optimizer.zero_grad()
                 model.train()
@@ -686,9 +657,9 @@ class NN:
         weights = torch.tensor(weights, dtype=torch.float32)
 
         N, K = X.shape
-        X = X.view(n_times, N//n_times, K).swapaxes(0, 1).to(self.device)
-        y = y.view(n_times, N//n_times).swapaxes(0, 1).to(self.device)
-        weights = weights.view(n_times, N//n_times).swapaxes(0, 1).to(self.device)
+        X = X.view(n_times, N // n_times, K).swapaxes(0, 1).to(self.device)
+        y = y.view(n_times, N // n_times).swapaxes(0, 1).to(self.device)
+        weights = weights.view(n_times, N // n_times).swapaxes(0, 1).to(self.device)
 
         self.model.train()
 
@@ -702,10 +673,7 @@ class NN:
         optimizer.step()
 
     def predict(
-        self,
-        X: np.array,
-        n_times: int = None,
-        hidden: torch.Tensor | list | None = None
+        self, X: np.array, n_times: int | None = None, hidden: torch.Tensor | list | None = None
     ) -> tuple[np.array, torch.Tensor | list]:
         """Predict the target variable for the given input data.
 
@@ -722,7 +690,7 @@ class NN:
         X_tensor = torch.tensor(X, dtype=torch.float32)
 
         N, K = X.shape
-        X_tensor = X_tensor.view(n_times, N//n_times, K).swapaxes(0, 1).to(self.device)
+        X_tensor = X_tensor.view(n_times, N // n_times, K).swapaxes(0, 1).to(self.device)
 
         X_tensor = torch.nan_to_num(X_tensor, 0)
         self.model.eval()
@@ -753,7 +721,7 @@ class NN:
             "lr_patience": self.lr_patience,
             "lr_factor": self.lr_factor,
             "lr_refit": self.lr_refit,
-            "random_seed": self.random_seed
+            "random_seed": self.random_seed,
         }
 
     def set_params(self, **parameters):

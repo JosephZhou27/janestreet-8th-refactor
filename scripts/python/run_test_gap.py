@@ -1,17 +1,16 @@
-"""Load model and test it on a sample of last 200 days with a gap of 200 days.
-"""
+"""Load model and test it on a sample of last 200 days with a gap of 200 days."""
+
 import numpy as np
 import polars as pl
 from tqdm.auto import tqdm
 
-from janestreet.setup_env import setup_environment
-from janestreet.pipeline import FullPipeline
-from janestreet.models.nn import NN
-from janestreet.config import COL_DATE, COL_WEIGHT, COL_TARGET
+from janestreet.config import COL_DATE, COL_TARGET, COL_WEIGHT
 from janestreet.data_processor import DataProcessor
 from janestreet.metrics import r2_weighted
+from janestreet.models.nn import NN
+from janestreet.pipeline import FullPipeline
+from janestreet.setup_env import setup_environment
 from janestreet.transformers import PolarsTransformer
-
 
 MODEL_TYPE = "gru"
 NUM = 3
@@ -44,23 +43,21 @@ for NUM in [2, 3]:
             refit=True,
             change_lr=False,
         )
-        df_test = df.filter((pl.col(COL_DATE) >= 1499)&(pl.col(COL_DATE) < 1699))
+        df_test = df.filter((pl.col(COL_DATE) >= 1499) & (pl.col(COL_DATE) < 1699))
         df_valid = df.filter(pl.col(COL_DATE) >= 1299)
 
         pipeline.fit(verbose=True)
 
-        cnt_dates = 0
         preds_m = []
         dates = np.unique(df_valid.select(pl.col(COL_DATE)).to_series().to_numpy())
-        for date_id in tqdm(dates):
+        for cnt_dates, date_id in enumerate(tqdm(dates)):
             df_valid_date = df.filter(pl.col(COL_DATE) == date_id)
             if pipeline.refit & (cnt_dates > 0):
-                df_valid_time = df.filter(pl.col(COL_DATE) == date_id-1)
+                df_valid_time = df.filter(pl.col(COL_DATE) == date_id - 1)
                 pipeline.update(df_valid_time)
             if date_id >= 1499:
                 preds_i, hidden = pipeline.predict(df_valid_date, n_times=None)
                 preds_m += list(preds_i)
-            cnt_dates += 1
 
         preds_m = np.array(preds_m)
         preds.append(preds_m)

@@ -1,11 +1,11 @@
-"""Run ensemble.
-"""
+"""Run ensemble."""
+
 import numpy as np
 
-from janestreet.setup_env import setup_environment
-from janestreet.pipeline import FullPipeline, PipelineCV, PipelineEnsemble
-from janestreet.models.nn import NN
 from janestreet.data_processor import DataProcessor
+from janestreet.models.nn import NN
+from janestreet.pipeline import FullPipeline, PipelineCV, PipelineEnsemble
+from janestreet.setup_env import setup_environment
 from janestreet.tracker import WandbTracker
 
 TRACK = False
@@ -23,7 +23,7 @@ MODEL_NAMES = [
     "gru_3.1_700_cv",
     "gru_3.2_700_cv",
 ]
-WEIGHTS = np.array([1.0]*len(MODEL_NAMES))/ len(MODEL_NAMES)
+WEIGHTS = np.array([1.0] * len(MODEL_NAMES)) / len(MODEL_NAMES)
 REFIT_MODELS = [True] * len(MODEL_NAMES)
 
 setup_environment(TRACK)
@@ -36,7 +36,7 @@ print(WEIGHTS)
 print(REFIT_MODELS)
 
 models = []
-for i, model_name in enumerate(MODEL_NAMES):
+for _i, model_name in enumerate(MODEL_NAMES):
     pipeline = FullPipeline(
         NN(),
         name=model_name,
@@ -56,12 +56,7 @@ if TRACK:
     params["models"] = MODEL_NAMES
     params["weights"] = WEIGHTS
     params["n_models"] = len(MODEL_NAMES)
-    wandb_tracker = WandbTracker(
-        MODEL_NAME,
-        params,
-        category=CATEGORY,
-        comment=COMMENT
-    )
+    wandb_tracker = WandbTracker(MODEL_NAME, params, category=CATEGORY, comment=COMMENT)
     wandb_tracker.init_run([])
 else:
     wandb_tracker = None

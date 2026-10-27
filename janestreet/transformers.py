@@ -2,36 +2,38 @@
 
 import polars as pl
 
+
 class PolarsTransformer:
     """A custom transformer for preprocessing data using Polars.
 
-    This transformer provides functionality to scale, fill missing values, 
-    and clip features in a DataFrame. It can fit on a given 
+    This transformer provides functionality to scale, fill missing values,
+    and clip features in a DataFrame. It can fit on a given
     dataset to compute statistics and apply transformations accordingly.
 
     Args:
         features (list, optional): List of feature columns to be transformed. Defaults to None.
         fillnull (bool, optional): Whether to fill null values with 0. Defaults to True.
-        scale (bool, optional): Whether to scale the features 
+        scale (bool, optional): Whether to scale the features
                                 by mean and standard deviation. Defaults to True.
-        clip_time (bool, optional): Whether to clip the "feature_time_id" column 
+        clip_time (bool, optional): Whether to clip the "feature_time_id" column
                                     to its min and max values. Defaults to True.
     """
+
     def __init__(
         self,
-        features: list = None,
+        features: list | None = None,
         fillnull: bool = True,
         scale: bool = True,
-        clip_time: bool = True
+        clip_time: bool = True,
     ) -> None:
         """Initializes the PolarsTransformer class.
 
         Args:
             features (list, optional): List of feature columns to be transformed. Defaults to None.
             fillnull (bool, optional): Whether to fill null values with 0. Defaults to True.
-            scale (bool, optional): Whether to scale the features 
+            scale (bool, optional): Whether to scale the features
                                     by mean and standard deviation. Defaults to True.
-            clip_time (bool, optional): Whether to clip the "feature_time_id" column 
+            clip_time (bool, optional): Whether to clip the "feature_time_id" column
                                         to its min and max values. Defaults to True.
         """
         self.features = features
@@ -77,17 +79,18 @@ class PolarsTransformer:
             }
 
         if self.fillnull:
-            df = df.with_columns([
-                pl.col(column).fill_null(0.0)
-                for column in self.features
-            ])
+            df = df.with_columns([pl.col(column).fill_null(0.0) for column in self.features])
 
         if self.scale:
-            df = df.with_columns([
-                ((pl.col(column) - self.statistics_mean_std[column]["mean"]) /
-                self.statistics_mean_std[column]["std"])
-                for column in self.features
-            ])
+            df = df.with_columns(
+                [
+                    (
+                        (pl.col(column) - self.statistics_mean_std[column]["mean"])
+                        / self.statistics_mean_std[column]["std"]
+                    )
+                    for column in self.features
+                ]
+            )
 
         return df
 
@@ -96,15 +99,15 @@ class PolarsTransformer:
 
         Args:
             df (pl.DataFrame): The input Polars DataFrame.
-            refit (bool, optional): If True, updates the min and max values for 
+            refit (bool, optional): If True, updates the min and max values for
                 the "feature_time_id" column. Defaults to False.
 
         Returns:
             pl.DataFrame: The transformed Polars DataFrame.
         """
-        if refit:
-            if self.clip_time:
-                self.statistics_min_max.update({
+        if refit and self.clip_time:
+            self.statistics_min_max.update(
+                {
                     column: {
                         "min": (
                             self.statistics_min_max[column]["min"]
@@ -118,28 +121,32 @@ class PolarsTransformer:
                         ),
                     }
                     for column in ["feature_time_id"]
-                })
+                }
+            )
 
         if self.clip_time:
-            df = df.with_columns([
-                pl.col(column).clip(
-                    self.statistics_min_max[column]["min"],
-                    self.statistics_min_max[column]["max"]
-                )
-                for column in ["feature_time_id"]
-            ])
+            df = df.with_columns(
+                [
+                    pl.col(column).clip(
+                        self.statistics_min_max[column]["min"],
+                        self.statistics_min_max[column]["max"],
+                    )
+                    for column in ["feature_time_id"]
+                ]
+            )
 
         if self.fillnull:
-            df = df.with_columns([
-                pl.col(column).fill_null(0.0)
-                for column in self.features
-            ])
+            df = df.with_columns([pl.col(column).fill_null(0.0) for column in self.features])
 
         if self.scale:
-            df = df.with_columns([
-                ((pl.col(column) - self.statistics_mean_std[column]["mean"]) /
-                    self.statistics_mean_std[column]["std"])
-                for column in self.features
-            ])
+            df = df.with_columns(
+                [
+                    (
+                        (pl.col(column) - self.statistics_mean_std[column]["mean"])
+                        / self.statistics_mean_std[column]["std"]
+                    )
+                    for column in self.features
+                ]
+            )
 
         return df

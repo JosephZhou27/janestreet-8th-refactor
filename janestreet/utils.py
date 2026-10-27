@@ -13,7 +13,7 @@ import shutil
 import subprocess
 
 
-def run_shell_command(command: str, cwd: str = None) -> None:
+def run_shell_command(command: str, cwd: str | None = None) -> None:
     """Executes a shell command and prints the output/errors in real-time.
 
     Args:
@@ -32,13 +32,13 @@ def run_shell_command(command: str, cwd: str = None) -> None:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True,
-            universal_newlines=True
+            universal_newlines=True,
         )
 
         # Print the output in real-time
         while True:
             output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
+            if output == "" and process.poll() is not None:
                 break
             if output:
                 print(output.strip())
@@ -59,7 +59,6 @@ def create_folder(path: str, rm: bool = False) -> None:
         path (str): Path to the folder.
         rm (bool, optional): Whether to remove the folder if it already exists. Defaults to False.
     """
-    if rm:
-        if os.path.exists(path):
-            shutil.rmtree(path)
+    if rm and os.path.exists(path):
+        shutil.rmtree(path)
     os.makedirs(path, exist_ok=True)
