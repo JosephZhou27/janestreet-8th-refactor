@@ -1,8 +1,11 @@
 """Run ensemble."""
 
+import logging
+
 import numpy as np
 
 from janestreet.data_processor import DataProcessor
+from janestreet.logging_config import setup_logging
 from janestreet.models.nn import NN
 from janestreet.pipeline import FullPipeline, PipelineCV, PipelineEnsemble
 from janestreet.setup_env import setup_environment
@@ -26,14 +29,16 @@ MODEL_NAMES = [
 WEIGHTS = np.array([1.0] * len(MODEL_NAMES)) / len(MODEL_NAMES)
 REFIT_MODELS = [True] * len(MODEL_NAMES)
 
+logger = logging.getLogger(__name__)
+setup_logging()
 setup_environment(TRACK)
 
 data_processor = DataProcessor(MODEL_NAME, skip_days=START)
 df = data_processor.get_train_data()
 
-print(MODEL_NAMES)
-print(WEIGHTS)
-print(REFIT_MODELS)
+logger.info("Model names: %s", MODEL_NAMES)
+logger.info("Weights: %s", WEIGHTS)
+logger.info("Refit models: %s", REFIT_MODELS)
 
 models = []
 for _i, model_name in enumerate(MODEL_NAMES):
