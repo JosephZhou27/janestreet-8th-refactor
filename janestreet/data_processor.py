@@ -145,11 +145,11 @@ class DataProcessor:
         """
         return joblib.load(self.path / f"{self.name}.joblib")
 
-    def _load_data(self) -> pl.DataFrame:
+    def _load_data(self) -> pl.LazyFrame:
         """Loads the training data from disk.
 
         Returns:
-            pl.DataFrame: Loaded training data.
+            pl.LazyFrame: Loaded training data.
         """
         df = pl.scan_parquet(get_settings().data_dir / "train.parquet")
         df = df.drop("partition_id")
@@ -236,6 +236,8 @@ class DataProcessor:
                 ]
             )
         else:
+            if symbols is None:
+                raise ValueError("symbols must be set when fast=True.")
             df = (
                 df.group_by("symbol_id")
                 .agg(

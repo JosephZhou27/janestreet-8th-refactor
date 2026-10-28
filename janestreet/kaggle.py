@@ -20,12 +20,12 @@ from .utils import run_shell_command
 logger = logging.getLogger(__name__)
 
 
-def update_dataset(dataset_id: str, source_path: str) -> None:
+def update_dataset(dataset_id: str, source_path: str | Path) -> None:
     """Updates a Kaggle dataset with specific subfolders.
 
     Args:
         dataset_id (str): The ID of the Kaggle dataset (e.g., "username/dataset-name").
-        source_path (str): The local path where the dataset files are stored.
+        source_path (str | Path): The local path where the dataset files are stored.
     """
     original_source_path = Path(source_path)
     temp_dir = Path("/tmp/kaggle_dataset_temp/models")
@@ -69,12 +69,12 @@ def update_dataset(dataset_id: str, source_path: str) -> None:
     shutil.rmtree(temp_dir)
 
 
-def upload_code(dataset_id: str, source_path: str) -> None:
+def upload_code(dataset_id: str, source_path: str | Path) -> None:
     """Uploads a Python package to a Kaggle dataset.
 
     Args:
         dataset_id (str): The ID of the Kaggle dataset (e.g., "username/dataset-name").
-        source_path (str): The local path where the Python package is stored.
+        source_path (str | Path): The local path where the Python package is stored.
 
     Notes:
         This function builds a Python package in the project directory
@@ -86,19 +86,19 @@ def upload_code(dataset_id: str, source_path: str) -> None:
     original_source_path = Path(source_path)
     temp_dir = tempfile.mkdtemp()
     shutil.copy(original_source_path, temp_dir)
-    source_path = Path(temp_dir)
+    temp_path = Path(temp_dir)
 
     metadata = {
         "id": f"{KAGGLE_USERNAME}/{dataset_id}",
     }
 
-    metadata_path = source_path / "dataset-metadata.json"
+    metadata_path = temp_path / "dataset-metadata.json"
     with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f)
 
     run_shell_command(
         f"""
-        kaggle datasets version -p '{source_path}' -m 'Updated dataset'
+        kaggle datasets version -p '{temp_path}' -m 'Updated dataset'
         """
     )
 
