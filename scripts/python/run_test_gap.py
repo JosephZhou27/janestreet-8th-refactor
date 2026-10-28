@@ -1,11 +1,14 @@
 """Load model and test it on a sample of last 200 days with a gap of 200 days."""
 
+import logging
+
 import numpy as np
 import polars as pl
 from tqdm.auto import tqdm
 
 from janestreet.config import COL_DATE, COL_TARGET, COL_WEIGHT
 from janestreet.data_processor import DataProcessor
+from janestreet.logging_config import setup_logging
 from janestreet.metrics import r2_weighted
 from janestreet.models.nn import NN
 from janestreet.pipeline import FullPipeline
@@ -15,6 +18,8 @@ from janestreet.transformers import PolarsTransformer
 MODEL_TYPE = "gru"
 NUM = 3
 
+logger = logging.getLogger(__name__)
+setup_logging()
 setup_environment()
 
 data_processor = DataProcessor(f"{MODEL_TYPE}_{NUM}.{0}_{700}_cv", skip_days=1200)
@@ -22,14 +27,14 @@ df = data_processor.get_train_data()
 
 features = data_processor.features
 
-print(features)
-print(f"Number of features: {len(features)}")
+logger.info("Features: %s", features)
+logger.info("Number of features: %d", len(features))
 
 preds = []
 for NUM in [2, 3]:
     for SEED in range(3):
         MODEL_NAME = f"{MODEL_TYPE}_{NUM}.{SEED}_{700}_cv"
-        print(MODEL_NAME)
+        logger.info("Testing model: %s", MODEL_NAME)
 
         model = NN(random_seed=SEED)
 
@@ -66,4 +71,4 @@ preds = np.mean(preds, axis=0)
 y = df_test.select(pl.col(COL_TARGET)).to_series().to_numpy()
 weight = df_test.select(pl.col(COL_WEIGHT)).to_series().to_numpy()
 score = r2_weighted(y, preds, weight)
-print(f"Score: {score:.5f}")
+logger.info("Score: %.5f", score)

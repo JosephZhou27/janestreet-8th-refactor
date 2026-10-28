@@ -1,9 +1,13 @@
 """Evaluation and logging functions."""
 
+import logging
+
 import pandas as pd
 import wandb
 
 from .config import WANDB_PROJECT, get_settings
+
+logger = logging.getLogger(__name__)
 
 
 class WandbTracker:
@@ -57,8 +61,8 @@ class WandbTracker:
             save_code=True,
         )
         self.save_features(features)
-        print(f"Running {self.run_name} model.")
-        print(self.comment)
+        logger.info("Running %s model.", self.run_name)
+        logger.info("Comment: %s", self.comment)
 
     def save_features(self, features: list) -> None:
         """Saves the list of features as a WandB artifact.

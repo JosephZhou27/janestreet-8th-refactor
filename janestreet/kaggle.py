@@ -8,6 +8,7 @@ Functions:
 """
 
 import json
+import logging
 import os
 import shutil
 import tempfile
@@ -15,6 +16,8 @@ from pathlib import Path
 
 from .config import KAGGLE_USERNAME, get_settings
 from .utils import run_shell_command
+
+logger = logging.getLogger(__name__)
 
 
 def update_dataset(dataset_id: str, source_path: str) -> None:
@@ -39,13 +42,13 @@ def update_dataset(dataset_id: str, source_path: str) -> None:
         if src.exists():
             shutil.copytree(src, dest)
         else:
-            print(f"Warning: Folder '{src}' does not exist and won't be uploaded.")
+            logger.warning("Folder %s does not exist and won't be uploaded.", src)
 
     # Debug: List files in temp_dir to ensure they exist
-    print(f"Files in temp_dir ({temp_dir}):")
+    logger.debug("Files in temp_dir (%s):", temp_dir)
     for root, _, files in os.walk(temp_dir):
         for file in files:
-            print(os.path.join(root, file))
+            logger.debug(os.path.join(root, file))
 
     # Add metadata
     metadata = {
@@ -59,7 +62,7 @@ def update_dataset(dataset_id: str, source_path: str) -> None:
     command = f"""
         kaggle datasets version -p '{temp_dir}' -m 'Updated dataset' -r zip
     """
-    print(f"Running command: {command}")
+    logger.info("Running command: %s", command)
     os.system(command)
 
     # Clean up temporary directory

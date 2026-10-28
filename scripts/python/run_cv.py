@@ -1,6 +1,9 @@
 """Run model on CV."""
 
+import logging
+
 from janestreet.data_processor import DataProcessor
+from janestreet.logging_config import setup_logging
 from janestreet.models.nn import NN
 from janestreet.pipeline import FullPipeline, PipelineCV
 from janestreet.setup_env import setup_environment
@@ -19,6 +22,8 @@ N_SPLITS = 2
 START = 700
 TRAIN_SIZE = None
 
+logger = logging.getLogger(__name__)
+setup_logging()
 setup_environment(TRACK)
 
 data_processor = DataProcessor(f"{MODEL_TYPE}_{NUM}.{0}_{START}_cv", skip_days=START)
@@ -50,9 +55,9 @@ params_nn = {
     "lr_factor": 0.5,
 }
 
-print(features)
-print(f"Number of features: {len(features)}")
-print(params_nn)
+logger.info("Features: %s", features)
+logger.info("Number of features: %d", len(features))
+logger.info("Model parameters: %s", params_nn)
 
 for SEED in range(3):
     MODEL_NAME = f"{MODEL_TYPE}_{NUM}.{SEED}_{700}_cv"

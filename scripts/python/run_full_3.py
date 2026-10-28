@@ -1,11 +1,14 @@
 """Run model for final submission."""
 
+import logging
+
 import numpy as np
 import polars as pl
 from tqdm.auto import tqdm
 
 from janestreet.config import COL_DATE, COL_TARGET, COL_WEIGHT
 from janestreet.data_processor import DataProcessor
+from janestreet.logging_config import setup_logging
 from janestreet.metrics import r2_weighted
 from janestreet.models.nn import NN
 from janestreet.pipeline import FullPipeline
@@ -22,6 +25,8 @@ CATEGORY = "model_ver22_ts"
 LOAD_MODEL = False
 REFIT = True
 
+logger = logging.getLogger(__name__)
+setup_logging()
 setup_environment()
 
 data_processor = DataProcessor(
@@ -54,20 +59,20 @@ params_nn = {
     "lr_factor": 0.5,
 }
 
-print(features)
-print(f"Number of features: {len(features)}")
-print(params_nn)
+logger.info("Features: %s", features)
+logger.info("Number of features: %d", len(features))
+logger.info("Model parameters: %s", params_nn)
 
 for SEED in range(3):
     MODEL_NAME = f"{MODEL_TYPE}_{NUM}.{SEED}_700"
     EPOCHS = EPOCHS_LS[SEED]
 
-    print(MODEL_NAME)
+    logger.info("Running model: %s", MODEL_NAME)
 
     if EPOCHS is not None:
         params_nn["early_stopping"] = False
         params_nn["epochs"] = EPOCHS
-        print(f"Running final model with {params_nn['epochs']} epochs.")
+        logger.info("Running final model with %d epochs.", params_nn["epochs"])
     model = NN(**params_nn, random_seed=SEED)
 
     df_train = df.filter(pl.col(COL_DATE) >= START + 200)
@@ -98,4 +103,4 @@ for SEED in range(3):
     y = df_valid.select(pl.col(COL_TARGET)).to_series().to_numpy()
     weight = df_valid.select(pl.col(COL_WEIGHT)).to_series().to_numpy()
     score = r2_weighted(y, preds, weight)
-    print(f"Score: {score:.5f}")
+    logger.info("Score: %.5f", score)
