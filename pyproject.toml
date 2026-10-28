@@ -27,6 +27,8 @@ dependencies = [
 dev = [
     "ipykernel>=6.29.5,<7",
     "mypy>=2.4.0",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.17.3",
 ]
 
@@ -55,3 +57,7 @@ ignore_errors = true
 [[tool.mypy.overrides]]
 module = ["joblib", "pandas"]
 ignore_missing_imports = true
+
+[tool.pytest]
+testpaths = ["tests"]
+addopts = ["-ra"]
