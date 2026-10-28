@@ -53,10 +53,10 @@ def test_market_average_is_mean_per_date_and_time(synthetic_df: pl.DataFrame) ->
 def test_get_train_data_end_to_end(
     synthetic_df: pl.DataFrame, tmp_settings: Settings, short_window: None, skip_days: int | None
 ) -> None:
-    tmp_settings.data_dir.mkdir(parents=True)
-    synthetic_df.with_columns(pl.lit(0).alias("partition_id")).write_parquet(
-        tmp_settings.data_dir / "train.parquet"
-    )
+    # Same folder layout as the Kaggle download
+    partition = tmp_settings.data_dir / "train.parquet" / "partition_id=0"
+    partition.mkdir(parents=True)
+    synthetic_df.write_parquet(partition / "part-0.parquet")
     dp = DataProcessor("test", skip_days=skip_days, transformer=PolarsTransformer())
 
     df = dp.get_train_data()
