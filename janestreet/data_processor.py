@@ -23,6 +23,7 @@ class DataProcessor:
         T (int): Window size for rolling computations.
         name (str): Name of the data processor.
         skip_days (int or None): Number of days to skip when loading data.
+        last_n_days (int or None): If set, only the last ``last_n_days`` dates are loaded.
         transformer (PolarsTransformer or None): Transformer for data preprocessing.
         features (list[str]): List of feature columns after processing.
     """
@@ -52,7 +53,11 @@ class DataProcessor:
     T = 1000
 
     def __init__(
-        self, name: str, skip_days: int | None = None, transformer: PolarsTransformer | None = None
+        self,
+        name: str,
+        skip_days: int | None = None,
+        transformer: PolarsTransformer | None = None,
+        last_n_days: int | None = None,
     ):
         """Initializes the DataProcessor.
 
@@ -61,10 +66,13 @@ class DataProcessor:
             skip_days (int, optional): Number of days to skip when loading data. Defaults to None.
             transformer (PolarsTransformer, optional): Transformer for data preprocessing.
                                                        Defaults to None.
+            last_n_days (int, optional): Only load the last ``last_n_days`` dates, for a quick
+                                         run on a laptop. Defaults to None (all dates).
         """
         self.name = name
         self.skip_days = skip_days
         self.transformer = transformer
+        self.last_n_days = last_n_days
 
         self.features = list(self.COLS_FEATURES_INIT)
         self.features += [f"{i}_diff_rolling_avg_{self.T}" for i in self.COLS_FEATURES_CORR]
@@ -151,10 +159,18 @@ class DataProcessor:
         Returns:
             pl.LazyFrame: Loaded training data.
         """
-        df = pl.scan_parquet(get_settings().data_dir / "train.parquet")
+        # Read only the .parquet files: macOS Finder leaves .DS_Store files in folders it opens
+        df = pl.scan_parquet(
+            get_settings().data_dir / "train.parquet" / "**" / "*.parquet",
+            hive_partitioning=True,
+        )
         df = df.drop("partition_id")
         if self.skip_days is not None:
             df = df.filter(pl.col("date_id") >= self.skip_days)
+        if self.last_n_days is not None:
+            last_date = df.select(pl.col("date_id").max()).collect().item()
+            df = df.filter(pl.col("date_id") > last_date - self.last_n_days)
+
         return df
 
     def _add_features(
