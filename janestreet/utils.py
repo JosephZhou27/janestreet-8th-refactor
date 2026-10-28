@@ -36,6 +36,8 @@ def run_shell_command(command: str, cwd: str | None = None) -> None:
             shell=True,
             universal_newlines=True,
         )
+        assert process.stdout is not None
+        assert process.stderr is not None
 
         # logs the output in real-time
         while True:

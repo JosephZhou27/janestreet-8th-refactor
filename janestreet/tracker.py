@@ -94,7 +94,8 @@ class WandbTracker:
         Args:
             text (str): Text of the alert.
         """
-        wandb.alert(title=f"Run {self.run_name} finished.", text=text, level=wandb.AlertLevel.INFO)
+        title = f"Run {self.run_name} finished."
+        wandb.alert(title=title, text=text, level=wandb.AlertLevel.INFO)  # type: ignore[attr-defined]
 
     def log_metrics(self, metrics: dict) -> None:
         """Logs metrics to the current WandB run.

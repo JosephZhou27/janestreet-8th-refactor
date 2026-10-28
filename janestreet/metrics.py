@@ -5,12 +5,12 @@ import torch
 import torch.nn as nn
 
 
-def r2_weighted(y_true: np.array, y_pred: np.array, sample_weight: np.array) -> float:
+def r2_weighted(y_true: np.ndarray, y_pred: np.ndarray, sample_weight: np.ndarray) -> float:
     """Compute the weighted R² score.
 
     Args:
-        y_true (np.array): Ground truth values.
-        y_pred (np.array): Predicted values.
+        y_true (np.ndarray): Ground truth values.
+        y_pred (np.ndarray): Predicted values.
         sample_weight (np.array): Weights for each observation.
 
     Returns:

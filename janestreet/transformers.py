@@ -1,5 +1,7 @@
 """Custom transformer for preprocessing data using Polars."""
 
+from typing import Any
+
 import polars as pl
 
 
@@ -21,7 +23,7 @@ class PolarsTransformer:
 
     def __init__(
         self,
-        features: list | None = None,
+        features: list[str] | None = None,
         fillnull: bool = True,
         scale: bool = True,
         clip_time: bool = True,
@@ -36,20 +38,26 @@ class PolarsTransformer:
             clip_time (bool, optional): Whether to clip the "feature_time_id" column
                                         to its min and max values. Defaults to True.
         """
-        self.features = features
+        self.features: list[str] | None = features
         self.fillnull = fillnull
         self.scale = scale
         self.clip_time = clip_time
-        self.statistics_mean_std = None
-        self.statistics_min_max = None
+        self.statistics_mean_std: dict[str, dict[str, Any]] = {}
+        self.statistics_min_max: dict[str, dict[str, Any]] = {}
 
-    def set_features(self, features: list) -> None:
+    def set_features(self, features: list[str]) -> None:
         """Sets the list of features to be transformed.
 
         Args:
             features (list): List of feature columns to be transformed.
         """
         self.features = features
+
+    def _get_features(self) -> list[str]:
+        """Returns the feature list, raising an error if it has not been set."""
+        if self.features is None:
+            raise ValueError("Features are not set: pass them to __init__ or call set_features().")
+        return self.features
 
     def fit_transform(self, df: pl.DataFrame) -> pl.DataFrame:
         """Fits the transformer on the given DataFrame and applies the transformations.
@@ -66,7 +74,7 @@ class PolarsTransformer:
                     "mean": df[column].mean(),
                     "std": df[column].std(),
                 }
-                for column in self.features
+                for column in self._get_features()
             }
 
         if self.clip_time:
@@ -79,7 +87,7 @@ class PolarsTransformer:
             }
 
         if self.fillnull:
-            df = df.with_columns([pl.col(column).fill_null(0.0) for column in self.features])
+            df = df.with_columns([pl.col(column).fill_null(0.0) for column in self._get_features()])
 
         if self.scale:
             df = df.with_columns(
@@ -88,7 +96,7 @@ class PolarsTransformer:
                         (pl.col(column) - self.statistics_mean_std[column]["mean"])
                         / self.statistics_mean_std[column]["std"]
                     )
-                    for column in self.features
+                    for column in self._get_features()
                 ]
             )
 
@@ -136,7 +144,7 @@ class PolarsTransformer:
             )
 
         if self.fillnull:
-            df = df.with_columns([pl.col(column).fill_null(0.0) for column in self.features])
+            df = df.with_columns([pl.col(column).fill_null(0.0) for column in self._get_features()])
 
         if self.scale:
             df = df.with_columns(
@@ -145,7 +153,7 @@ class PolarsTransformer:
                         (pl.col(column) - self.statistics_mean_std[column]["mean"])
                         / self.statistics_mean_std[column]["std"]
                     )
-                    for column in self.features
+                    for column in self._get_features()
                 ]
             )
 
