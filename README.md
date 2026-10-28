@@ -1,5 +1,7 @@
 # Kaggle Jane Street Real-Time Market Data Forecasting
 
+[![CI](https://github.com/JosephZhou27/janestreet-8th-refactor/actions/workflows/ci.yml/badge.svg)](https://github.com/JosephZhou27/janestreet-8th-refactor/actions/workflows/ci.yml)
+
 > **About this fork.** This is a fork of [evgeniavolkova/kagglejanestreet](https://github.com/evgeniavolkova/kagglejanestreet), the 8th-place (private LB) solution to the Jane Street Real-Time Market Data Forecasting competition by Evgeniia Volkova. All modelling ideas and the original code are hers.
 > In this fork I refactor the project for reproducibility and maintainability: a uv-managed environment, tests, CI, logging, and a small-sample mode that runs on a laptop. Every change goes through a pull request.
 
