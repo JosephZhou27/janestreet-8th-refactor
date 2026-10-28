@@ -11,6 +11,7 @@ Classes:
 
 import copy
 import gc
+import logging
 
 import joblib
 import numpy as np
@@ -32,6 +33,8 @@ from .config import (
 )
 from .metrics import r2_weighted
 from .tracker import WandbTracker
+
+logger = logging.getLogger(__name__)
 
 TEST_SIZE = 200
 GAP = 0
@@ -228,7 +231,7 @@ class FullPipeline:
             self.preprocessor = joblib.load(f"{self.path}/preprocessor_{self.name}.joblib")
         except FileNotFoundError:
             self.preprocessor = None
-            print("WARNING: Preprocessor not found.")
+            logger.warning("Preprocessor not found in %s.", self.path)
 
     def save(self) -> None:
         """Saves the model to disk."""
@@ -452,7 +455,7 @@ class PipelineCV:
 
         Args:
             df (pl.DataFrame): DataFrame containing the data.
-            verbose (bool, optional): Whether to print verbose output. Defaults to False.
+            verbose (bool, optional): Whether to log verbose output. Defaults to False.
 
         Returns:
             list: Scores for each fold.
@@ -472,14 +475,16 @@ class PipelineCV:
         scores = []
         for fold, (train_idx, valid_idx) in enumerate(cv_split):
             if verbose:
-                print("-" * 20 + f"Fold {fold}" + "-" * 20)
-                print(
-                    f"Train dates from {dates_unique[train_idx].min()}"
-                    f" to {dates_unique[train_idx].max()}"
+                logger.info("---------- Fold %d ----------", fold)
+                logger.info(
+                    "Train dates from %d to %d",
+                    dates_unique[train_idx].min(),
+                    dates_unique[train_idx].max(),
                 )
-                print(
-                    f"Valid dates from {dates_unique[valid_idx].min()}"
-                    f" to {dates_unique[valid_idx].max()}"
+                logger.info(
+                    "Valid dates from %d to %d",
+                    dates_unique[valid_idx].min(),
+                    dates_unique[valid_idx].max(),
                 )
 
             dates_train = dates_unique[train_idx]
@@ -514,7 +519,7 @@ class PipelineCV:
             score = r2_weighted(y_true, preds, weights)
             scores.append(score)
 
-            print(f"R2: {score:.5f}")
+            logger.info("Fold %d R2: %.5f", fold, score)
             if self.tracker:
                 self.tracker.log_metrics({f"fold_{fold}": score})
 

@@ -1,6 +1,7 @@
 """Neural net."""
 
 import copy
+import logging
 
 import numpy as np
 import torch
@@ -9,6 +10,8 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.auto import tqdm
 
 from janestreet.metrics import WeightedR2Loss, r2_weighted_torch
+
+logger = logging.getLogger(__name__)
 
 
 def flatten_collate_fn(batch: list) -> tuple[torch.Tensor]:
@@ -449,7 +452,7 @@ class NN:
         Args:
             train_set (tuple): A tuple containing input data, targets, and weights for training.
             val_set (tuple): A tuple containing input data, targets, and weights for validation.
-            verbose (bool, optional): If True, prints training progress. Defaults to False.
+            verbose (bool, optional): If True, logs training progress. Defaults to False.
         """
         torch.manual_seed(self.random_seed)
 
@@ -476,12 +479,16 @@ class NN:
 
         train_r2s, val_r2s = [], []
         if verbose:
-            print(f"Device: {self.device}")
-            print(
-                f"{'Epoch':^5} | {'Train Loss':^10} | {'Val Loss':^8} "
-                f"| {'Train R2':^9} | {'Val R2':^7} | {'LR':^7}"
+            logger.info("Device: %s", self.device)
+            logger.info(
+                "%5s | %10s | %8s | %9s | %7s | %7s",
+                "Epoch",
+                "Train Loss",
+                "Val Loss",
+                "Train R2",
+                "Val R2",
+                "LR",
             )
-            print("-" * 60)
 
         min_val_r2 = -np.inf
         best_epoch = 0
@@ -496,9 +503,14 @@ class NN:
             val_r2s.append(val_r2)
 
             if verbose:
-                print(
-                    f"{epoch + 1:^5} | {train_loss:^10.4f} | {val_loss:^8.4f} | "
-                    f"{train_r2:^9.4f} | {val_r2:^7.4f} | {lr_last:^7.5f}"
+                logger.info(
+                    "%5d | %10.4f | %8.4f | %9.4f | %7.4f | %7.5f",
+                    epoch + 1,
+                    train_loss,
+                    val_loss,
+                    train_r2,
+                    val_r2,
+                    lr_last,
                 )
 
             if val_r2 > min_val_r2:
@@ -512,7 +524,9 @@ class NN:
             if self.early_stopping and no_improvement >= self.early_stopping_patience + 1:
                 self.best_epoch = best_epoch + 1
                 if verbose:
-                    print(f"Early stopping on epoch {best_epoch + 1}. Best score: {min_val_r2:.4f}")
+                    logger.info(
+                        "Early stopping on epoch %d. Best score: %.4f", best_epoch + 1, min_val_r2
+                    )
                 break
 
         # Load the best model

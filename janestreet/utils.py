@@ -4,17 +4,20 @@ This module provides utility functions for executing shell commands
 and creating folders.
 
 Functions:
-    run_shell_command: Executes a shell command and prints the output in real-time.
+    run_shell_command: Executes a shell command and logs the output in real-time.
     create_folder: Creates a folder, with an option to remove existing ones.
 """
 
+import logging
 import os
 import shutil
 import subprocess
 
+logger = logging.getLogger(__name__)
+
 
 def run_shell_command(command: str, cwd: str | None = None) -> None:
-    """Executes a shell command and prints the output/errors in real-time.
+    """Executes a shell command and logs the output/errors in real-time.
 
     Args:
         command (str): The shell command to execute.
@@ -22,8 +25,7 @@ def run_shell_command(command: str, cwd: str | None = None) -> None:
                              Defaults to None.
     """
     try:
-        # Print the command itself
-        print(f"Running command: {command}")
+        logger.info("Running command: %s", command)
 
         # Start the process
         process = subprocess.Popen(
@@ -35,21 +37,21 @@ def run_shell_command(command: str, cwd: str | None = None) -> None:
             universal_newlines=True,
         )
 
-        # Print the output in real-time
+        # logs the output in real-time
         while True:
             output = process.stdout.readline()
             if output == "" and process.poll() is not None:
                 break
             if output:
-                print(output.strip())
+                logger.info(output.strip())
 
         # Capture any remaining errors
         stderr = process.stderr.read()
         if stderr:
-            print("Errors:\n", stderr)
+            logger.warning("Command stderr:\n%s", stderr)
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    except Exception:
+        logger.exception("Command failed: %s", command)
 
 
 def create_folder(path: str, rm: bool = False) -> None:
